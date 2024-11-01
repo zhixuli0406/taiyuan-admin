@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
 import SettingSection from './SettingSection'
 import { HelpCircle, Plus } from 'lucide-react'
+import Facebook from "/src/assests/facebook.svg"
+import Google  from "/src/assests/google.webp"
+import Twitter  from "/src/assests/x.webp"
 
 const ConnectedAccounts = () => {
 
@@ -9,19 +12,19 @@ const ConnectedAccounts = () => {
             id: 1,
             name: "Google",
             connected: true,
-            icon: "/public/google.webp"
+            icon: Google
         },
         {
             id: 2,
             name: "Facebook",
             connected: false,
-            icon: "/public/facebook.svg"
+            icon: Facebook
         },
         {
             id: 3,
             name: "Twitter",
             connected: true,
-            icon: "/public/x.webp"
+            icon: Twitter
         },
     ]);
 

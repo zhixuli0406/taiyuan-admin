@@ -24,7 +24,7 @@ const SalesChannelChart = () => {
             className='bg-gray-800 bg-opacity-50 shadow-lg backdrop-blur-md rounded-xl p-5 lg:col-span-2 border border-gray-700'
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.3, delay: 3 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
         >
             <h2 className='text-lg font-medium mb-4 text-gray-100'>
                 Sales by Channel

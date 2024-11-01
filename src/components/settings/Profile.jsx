@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SettingSection from './SettingSection';
 import { User, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import Image from "/src/assests/Mudassar Nazir.png"
 
 const Profile = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +30,7 @@ const Profile = () => {
         <SettingSection icon={User} title="Profile">
             <div className='flex flex-col sm:flex-row items-center mb-6'>
                 <img
-                    src="/src/components/settings/IMG_20240410_150552-preview (1).png"
+                    src={Image}
                     alt="Image"
                     className='rounded-full size-28 object-cover mr-4 mb-4 sm:mb-0'
                 />

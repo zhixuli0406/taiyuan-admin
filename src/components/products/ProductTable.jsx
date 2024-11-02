@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit, Search, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Search, Trash2, X, ChevronLeft, ChevronRight, UserPlus } from 'lucide-react';
 
 const Product_Data = [
     { id: 1, name: "Wireless Earbuds", category: "Electronics", price: 59.99, stock: 143, sales: 1200 },
@@ -24,7 +24,9 @@ const ProductTable = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredProducts, setFilteredProducts] = useState(Product_Data);
     const [isEditModalOpen, setEditModalOpen] = useState(false);
+    const [isAddModalOpen, setAddModalOpen] = useState(false);
     const [editProduct, setEditProduct] = useState(null);
+    const [newProduct, setNewProduct] = useState({ name: "", category: "", price: "", stock: "", sales: "" });
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
@@ -50,6 +52,14 @@ const ProductTable = () => {
         const updatedProducts = filteredProducts.filter(product => product.id !== productId);
         setFilteredProducts(updatedProducts);
     };
+    const handleAdd = () => {
+        const newId = filteredProducts.length > 0 ? Math.max(...filteredProducts.map(product => product.id)) + 1 : 1;
+        const productToAdd = { ...newProduct, id: newId, price: parseFloat(newProduct.price), stock: parseInt(newProduct.stock), sales: parseInt(newProduct.sales) };
+        setFilteredProducts([productToAdd, ...filteredProducts]);
+        setAddModalOpen(false);
+        setNewProduct({ name: "", category: "", price: "", stock: "", sales: "" }); // Reset new product state
+    };
+
 
     const handleSave = () => {
         const updatedProducts = filteredProducts.map(product =>
@@ -58,6 +68,7 @@ const ProductTable = () => {
         setFilteredProducts(updatedProducts);
         setEditModalOpen(false);
     };
+
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const getCurrentPageProducts = () => {
@@ -72,7 +83,6 @@ const ProductTable = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: 0.2 }}
         >
-            
             {/* Header and Search */}
             <div className='flex justify-between items-center mb-6'>
                 <h2 className='text-xl font-semibold text-gray-100'>Product List</h2>
@@ -87,7 +97,6 @@ const ProductTable = () => {
                         value={searchTerm}
                     />
                 </div>
-
             </div>
 
             <div className='overflow-x-auto'>
@@ -108,8 +117,8 @@ const ProductTable = () => {
                                 key={product.id}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ duration: 1.1, delay: 0.2 }}>
-
+                                transition={{ duration: 1.1, delay: 0.2 }}
+                            >
                                 <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 flex gap-2 items-center'>
                                     <img src="https://images.unsplash.com/photo-1627989580309-bfaf3e58af6f?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8d2lyZWxlc3MlMjBlYXJidWRzfGVufDB8fDB8fHww" alt="Product_Image"
                                         className='rounded-full size-10'
@@ -120,20 +129,26 @@ const ProductTable = () => {
                                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-100'>$ {product.price.toFixed(2)}</td>
                                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-100'>{product.stock}</td>
                                 <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-100'>{product.sales}</td>
-                                <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-100'>
-
-                                    <button className='text-indigo-400 hover:text-indigo-300 mr-3' onClick={() => handleEdit(product)}>
-                                        <Edit size={18} />
-                                    </button>
-                                    <button className='text-red-400 hover:text-red-300' onClick={() => handleDelete(product.id)}>
-                                        <Trash2 size={18} />
-                                    </button>
+                                <td className='px-6 py-4 whitespace-nowrap text-sm font-medium h-full'>
+                                    <div className='flex items-center gap-4 h-full'>
+                                        <button onClick={() => setAddModalOpen(true)} className='text-green-500 hover:text-green-700'>
+                                            <UserPlus size={20} />
+                                        </button>
+                                        <button onClick={() => handleEdit(product)} className='text-blue-500 hover:text-blue-700'>
+                                            <Edit size={18} />
+                                        </button>
+                                        <button onClick={() => handleDelete(product.id)} className='text-red-500 hover:text-red-700'>
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </td>
                             </motion.tr>
+
                         ))}
                     </tbody>
                 </table>
             </div>
+
 
             {/* Enhanced Pagination Controls */}
             <div className='flex flex-col md:flex-row justify-between mt-4 space-x-2 items-center'>
@@ -160,7 +175,8 @@ const ProductTable = () => {
 
 
 
-            {/* Popup Window for Editing */}
+            {/* Edit model pop up */}
+
             {isEditModalOpen && (
                 <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
                     <motion.div
@@ -243,8 +259,89 @@ const ProductTable = () => {
                 </div>
             )}
 
+
+            {/* Add Product Modal */}
+            {isAddModalOpen && (
+                <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
+                    <motion.div
+                        className='bg-gray-800 rounded-lg shadow-lg p-6 max-w-lg w-full'
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <h1 className='text-2xl font-semibold text-gray-100 mb-3 underline tracking-wider'>Add New Product</h1>
+
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>Product Name</label>
+                                <input
+                                    type="text"
+                                    value={newProduct.name}
+                                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                                    placeholder='Product Name'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>Product Category</label>
+                                <input
+                                    type="text"
+                                    value={newProduct.category}
+                                    onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                                    placeholder='Category'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>Product Price</label>
+                                <input
+                                    type="number"
+                                    value={newProduct.price}
+                                    onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                                    placeholder='Price'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>Product Stock</label>
+                                <input
+                                    type="number"
+                                    value={newProduct.stock}
+                                    onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+                                    placeholder='Stock'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>Product Sales</label>
+                                <input
+                                    type="number"
+                                    value={newProduct.sales}
+                                    onChange={(e) => setNewProduct({ ...newProduct, sales: e.target.value })}
+                                    placeholder='Sales'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+                        </div>
+
+                        <div className='flex justify-end mt-5 space-x-2'>
+                            <button onClick={() => setAddModalOpen(false)} className='bg-gray-600 hover:bg-red-500 text-gray-100 px-4 py-2 rounded-md'>
+                                <X size={22} />
+                            </button>
+                            <button onClick={handleAdd} className='bg-blue-600 hover:bg-blue-800 text-white text-md px-4 py-2 rounded-md w-24'>
+                                Add
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </motion.div>
-    )
-}
+    );
+};
 
 export default ProductTable;

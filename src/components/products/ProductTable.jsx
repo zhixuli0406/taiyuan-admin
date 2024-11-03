@@ -180,7 +180,7 @@ const ProductTable = () => {
             {isEditModalOpen && (
                 <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
                     <motion.div
-                        className='bg-gray-800 rounded-lg shadow-lg p-6 max-w-lg w-full'
+                        className='bg-gray-800 rounded-lg shadow-lg p-6 max-w-xl w-full'
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.3 }}
@@ -264,12 +264,12 @@ const ProductTable = () => {
             {isAddModalOpen && (
                 <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
                     <motion.div
-                        className='bg-gray-800 rounded-lg shadow-lg p-6 max-w-lg w-full'
+                        className='bg-gray-800 rounded-lg shadow-lg p-6 max-w-xl w-full'
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <h1 className='text-2xl font-semibold text-gray-100 mb-3 underline tracking-wider'>Add New Product</h1>
+                        <h1 className='text-2xl font-semibold text-gray-100 mb-4 underline tracking-wider'>Add New Product</h1>
 
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 
@@ -333,8 +333,8 @@ const ProductTable = () => {
                             <button onClick={() => setAddModalOpen(false)} className='bg-gray-600 hover:bg-red-500 text-gray-100 px-4 py-2 rounded-md'>
                                 <X size={22} />
                             </button>
-                            <button onClick={handleAdd} className='bg-blue-600 hover:bg-blue-800 text-white text-md px-4 py-2 rounded-md w-24'>
-                                Add
+                            <button onClick={handleAdd} className='bg-blue-600 hover:bg-blue-800 text-white text-md px-4 py-3 rounded-md w-32'>
+                                Add Product
                             </button>
                         </div>
                     </motion.div>

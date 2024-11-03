@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Edit, Search, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Search, Trash2, UserPlus, X } from 'lucide-react';
 
 const User_Data = [
     { id: 1, name: "Mudassar", email: "mudassar@gmail.com", role: "Admin", status: "Active" },
@@ -24,10 +24,14 @@ const User_Data = [
 const UsersPageTable = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredUsers, setFilteredUsers] = useState(User_Data);
+    const [isAddModalOpen, setAddModalOpen] = useState(false);
+    const [newUser, setNewUser] = useState({ name: "", email: "", role: "", status: ""});
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [editUser, setEditUser] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
+
+
 
     // Calculate total pages
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -42,6 +46,15 @@ const UsersPageTable = () => {
         );
         setFilteredUsers(filtered);
         setCurrentPage(1);
+    };
+
+    // Add User Function
+    const handleAdd = () => {
+        const newId = filteredUsers.length > 0 ? Math.max   (...filteredUsers.map(user => user.id)) + 1 : 1;
+        const UserToAdd = { ...newUser, id: newId, price: String(newUser.email), role: String(newUser.role), status: String(newUser.status) };
+        setFilteredUsers([UserToAdd, ...filteredUsers]);
+        setAddModalOpen(false);
+        setNewUser({ name: "", email: "", role: "", status: "" }); // Reset new user state
     };
 
     // Edit user function
@@ -131,15 +144,32 @@ const UsersPageTable = () => {
                                 <td className='px-6 py-4 whitespace-nowrap'>
                                     <div className='text-sm text-gray-300'>{user.email}</div>
                                 </td>
+
+                                
                                 <td className='px-6 py-4 whitespace-nowrap'>
-                                    <span className='px-3 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-800 text-gray-100'>{user.role}</span>
+                                    <span className={`px-4 inline-flex rounded-full text-xs bg-gray-200 leading-5 font-semibold 
+                                        ${user.role === "Admin" ? "text-green-700"
+                                        : user.role === "Moderator" ? "text-teal-600"
+                                            : user.role === "Customer" ? "text-orange-600"
+                                                    : "text-gray-100"}`}>
+                                        {user.role}
+                                    </span>
                                 </td>
+
+
                                 <td className='px-6 py-4 whitespace-nowrap'>
-                                    <span className={`px-3 inline-flex rounded-full text-xs leading-5 font-semibold ${user.status === "Active" ? "bg-green-700 text-green-100" : "bg-red-700 text-red-100"}`}>
+                                    <span className={`px-4 inline-flex rounded-full text-xs leading-5 font-semibold 
+                                        ${user.status === "Active" ? "bg-green-700 text-green-100"
+                                            : "bg-red-700 text-red-100"}`}>
                                         {user.status}
                                     </span>
                                 </td>
+
+
                                 <td className='px-6 py-4 whitespace-nowrap'>
+                                    <button onClick={() => setAddModalOpen(true)} className='text-green-500 hover:text-green-600'>
+                                        <UserPlus size={20} />
+                                    </button>   
                                     <button className='text-indigo-400 hover:text-indigo-300 mr-3 ml-3' onClick={() => handleEdit(user)}>
                                         <Edit size={18} />
                                     </button>
@@ -173,7 +203,7 @@ const UsersPageTable = () => {
                     </button>
                 </div>
 
-                <div className='text-sm font-medium text-gray-300 tracking-wider mt-5 md:mt-0'>Total Products: {filteredUsers.length}</div>
+                <div className='text-sm font-medium text-gray-300 tracking-wider mt-5 md:mt-0'>Total Users: {filteredUsers.length}</div>
             </div>
 
 
@@ -205,7 +235,7 @@ const UsersPageTable = () => {
                             <div className='flex flex-col space-y-1'>
                                 <label className='text-sm text-gray-300'>Email</label>
                                 <input
-                                    type='text'
+                                    type='email'
                                     value={editUser.email}
                                     onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
                                     className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
@@ -246,6 +276,81 @@ const UsersPageTable = () => {
                                 className='bg-blue-600 hover:bg-blue-800 text-white text-md px-4 py-2 rounded-md w-24'
                             >
                                 Save
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+
+
+
+            {/* Add Product Modal */}
+            {isAddModalOpen && (
+                <div className='fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50'>
+                    <motion.div
+                        className='bg-gray-800 rounded-lg shadow-lg p-6 max-w-xl w-full'
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <h1 className='text-2xl font-semibold text-gray-100 mb-6 underline tracking-wider'>Add New User</h1>
+
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>User Name</label>
+                                <input
+                                    type="text"
+                                    value={newUser.name}
+                                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                                    placeholder='User Name'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>User Email</label>
+                                <input
+                                    type="email"
+                                    value={newUser.email}
+                                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                                    placeholder='Email'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'>User Role</label>
+                                <input
+                                    type='text'
+                                    value={newUser.role}
+                                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                                    placeholder='Role'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+
+                            <div className='flex flex-col space-y-1'>
+                                <label className='text-sm text-gray-300'> User Status</label>
+                                <input
+                                    type="text"
+                                    value={newUser.status}
+                                    onChange={(e) => setNewUser({ ...newUser, status: e.target.value })}
+                                    placeholder='Status'
+                                    className='w-full px-4 py-2 bg-gray-700 text-white rounded-md'
+                                />
+                            </div>
+
+                        </div>
+
+                        <div className='flex justify-end mt-6 space-x-2'>
+                            <button onClick={() => setAddModalOpen(false)} className='bg-gray-600 hover:bg-red-500 text-gray-100 px-4 py-2 rounded-md'>
+                                <X size={22} />
+                            </button>
+                            <button onClick={handleAdd} className='bg-blue-600 hover:bg-blue-800 text-white text-md px-4 py-3 rounded-md w-28'>
+                                Add User
                             </button>
                         </div>
                     </motion.div>

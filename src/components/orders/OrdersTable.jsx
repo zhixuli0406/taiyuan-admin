@@ -145,7 +145,7 @@ const OrdersTable = () => {
                 </table>
             </div>
 
-            {/* Modal */}
+            {/* Eye edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <motion.div
@@ -155,7 +155,7 @@ const OrdersTable = () => {
                         transition={{ duration: 0.3 }}
                     >
                         <div>
-                            <h1 className="text-2xl font-semibold text-gray-100 mb-3 tracking-wider">
+                            <h1 className="text-2xl font-semibold text-gray-100 mb-5 tracking-wider">
                                 Update Status for:
                             </h1>
                             <label className="text-sm text-gray-300">Customer's Name</label>
@@ -190,9 +190,9 @@ const OrdersTable = () => {
                             </button>
                             <button
                                 onClick={handleSaveStatus}
-                                className="bg-blue-600 hover:bg-blue-800 text-white text-md px-4 py-2 rounded-md w-24"
+                                className="bg-blue-600 hover:bg-blue-800 text-white text-md px-3 py-3 rounded-md w-32"
                             >
-                                Save
+                                Save Changes
                             </button>
                         </div>
                     </motion.div>
@@ -220,7 +220,7 @@ const OrdersTable = () => {
                     </button>
                 </div>
 
-                <div className='text-sm font-medium text-gray-300 tracking-wider mt-5 md:mt-0'>Total Products: {filteredOrders.length}</div>
+                <div className='text-sm font-medium text-gray-300 tracking-wider mt-5 md:mt-0'>Total Orders: {filteredOrders.length}</div>
             </div>
         </motion.div>
     );

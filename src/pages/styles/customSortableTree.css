@@ -1,0 +1,23 @@
+.rst__moveHandle {
+    background: #2d2d2d url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MiIgaGVpZ2h0PSI0MiI+PGcgc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjIuOSIgPjxwYXRoIGQ9Ik0xNCAxNS43aDE0LjQiLz48cGF0aCBkPSJNMTQgMjEuNGgxNC40Ii8+PHBhdGggZD0iTTE0IDI3LjFoMTQuNCIvPjwvZz4KPC9zdmc+) no-repeat center;
+    border: none !important;
+    /* 刪除邊框 */
+}
+
+.rst__rowContents {
+    background: none !important;
+    /* 刪除背景 */
+    border: none !important;
+    /* 刪除邊框 */
+}
+
+.rst__lineHalfHorizontalRight::before,
+.rst__lineFullVertical::after,
+.rst__lineHalfVerticalTop::after,
+.rst__lineHalfVerticalBottom::after {
+    background: #FFFFFF !important;
+}
+
+.rst__lineChildren::after {
+    background: #FFFFFF !important;
+}

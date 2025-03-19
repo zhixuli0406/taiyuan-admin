@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { BarChart2, DollarSign, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, Menu } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BarChart2, DollarSign, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, Menu, ChartBarStacked } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 const SIDEBAR_ITEMS = [
-    { name: "Overview", icon: BarChart2, color: "#6366f1", href: "/" },
-    { name: "Products", icon: ShoppingBag, color: "#8B5CF6", href: "/products" },
-    { name: "Users", icon: Users, color: "#EC4899", href: "/users" },
-    { name: "Sales", icon: DollarSign, color: "#10B981", href: "/sales" },
-    { name: "Orders", icon: ShoppingCart, color: "#F59E0B", href: "/orders" },
-    { name: "Analytics", icon: TrendingUp, color: "#3B82F6", href: "/analytics" },
-    { name: "Settings", icon: Settings, color: "#6EE7B7", href: "/settings" },
+    { name: "總覽", icon: BarChart2, color: "#8B5CF6", href: "/" },
+    { name: "產品", icon: ShoppingBag, color: "#8B5CF6", href: "/products" },
+    { name: "分類", icon: ChartBarStacked, color: "#8B5CF6", href: "/categories" },
+    { name: "使用者", icon: Users, color: "#8B5CF6", href: "/users" },
+    { name: "Sales", icon: DollarSign, color: "#8B5CF6", href: "/sales" },
+    { name: "訂單", icon: ShoppingCart, color: "#8B5CF6", href: "/orders" },
+    { name: "分析", icon: TrendingUp, color: "#8B5CF6", href: "/analytics" },
+    { name: "設定", icon: Settings, color: "#8B5CF6", href: "/settings" },
 ];
 
 const Sidebar = () => {

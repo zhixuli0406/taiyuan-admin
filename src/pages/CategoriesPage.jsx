@@ -216,6 +216,7 @@ const CategoriesPage = () => {
       fetchCategories();
     } catch (err) {
       console.error(err);
+      window.alert(err.response.data.error);
     }
   };
 

@@ -1344,10 +1344,30 @@
         "tags": [
           "Customers"
         ],
-        "summary": "获取客户列表",
+        "summary": "獲取客戶列表",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "分頁頁碼"
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "每頁數量"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "成功获取客户列表",
+            "description": "成功獲取客戶列表",
             "content": {
               "application/json": {
                 "schema": {
@@ -1358,14 +1378,89 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "user_id": {
+                            "type": "string",
+                            "description": "Auth0 用戶ID"
+                          },
                           "email": {
                             "type": "string"
                           },
+                          "email_verified": {
+                            "type": "boolean"
+                          },
                           "name": {
                             "type": "string"
+                          },
+                          "nickname": {
+                            "type": "string"
+                          },
+                          "picture": {
+                            "type": "string"
+                          },
+                          "identities": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "access_token": {
+                                  "type": "string"
+                                },
+                                "connection": {
+                                  "type": "string"
+                                },
+                                "user_id": {
+                                  "type": "string"
+                                },
+                                "provider": {
+                                  "type": "string"
+                                },
+                                "isSocial": {
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          },
+                          "family_name": {
+                            "type": "string"
+                          },
+                          "given_name": {
+                            "type": "string"
+                          },
+                          "statusMessage": {
+                            "type": "string"
+                          },
+                          "last_login": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "last_ip": {
+                            "type": "string"
+                          },
+                          "logins_count": {
+                            "type": "integer"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time"
                           }
                         }
                       }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "description": "總用戶數"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "description": "當前頁碼"
+                    },
+                    "per_page": {
+                      "type": "integer",
+                      "description": "每頁數量"
                     }
                   }
                 }
@@ -1373,7 +1468,7 @@
             }
           },
           "403": {
-            "description": "权限不足"
+            "description": "權限不足"
           }
         }
       },
@@ -1381,7 +1476,7 @@
         "tags": [
           "Customers"
         ],
-        "summary": "创建新客户",
+        "summary": "創建新客戶",
         "requestBody": {
           "required": true,
           "content": {
@@ -1405,7 +1500,7 @@
         },
         "responses": {
           "201": {
-            "description": "客户创建成功",
+            "description": "客戶創建成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1428,10 +1523,46 @@
             }
           },
           "400": {
-            "description": "请求参数错误"
+            "description": "請求參數錯誤"
           },
           "403": {
-            "description": "权限不足"
+            "description": "權限不足"
+          }
+        }
+      }
+    },
+    "/customers/sync": {
+      "post": {
+        "tags": [
+          "Customers"
+        ],
+        "summary": "同步 Auth0 用戶到本地資料庫",
+        "responses": {
+          "200": {
+            "description": "同步成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "用戶同步完成"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "同步的用戶數量"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "權限不足"
+          },
+          "500": {
+            "description": "同步失敗"
           }
         }
       }
@@ -1441,10 +1572,10 @@
         "tags": [
           "Customers"
         ],
-        "summary": "获取当前登录客户信息",
+        "summary": "獲取當前登入客戶信息",
         "responses": {
           "200": {
-            "description": "成功获取客户信息",
+            "description": "成功獲取客戶信息",
             "content": {
               "application/json": {
                 "schema": {
@@ -1453,11 +1584,53 @@
                     "user": {
                       "type": "object",
                       "properties": {
+                        "user_id": {
+                          "type": "string"
+                        },
                         "email": {
                           "type": "string"
                         },
+                        "email_verified": {
+                          "type": "boolean"
+                        },
                         "name": {
                           "type": "string"
+                        },
+                        "nickname": {
+                          "type": "string"
+                        },
+                        "picture": {
+                          "type": "string"
+                        },
+                        "identities": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "access_token": {
+                                "type": "string"
+                              },
+                              "connection": {
+                                "type": "string"
+                              },
+                              "user_id": {
+                                "type": "string"
+                              },
+                              "provider": {
+                                "type": "string"
+                              },
+                              "isSocial": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        },
+                        "statusMessage": {
+                          "type": "string"
+                        },
+                        "last_login": {
+                          "type": "string",
+                          "format": "date-time"
                         }
                       }
                     }
@@ -1466,8 +1639,11 @@
               }
             }
           },
-          "403": {
-            "description": "权限不足"
+          "401": {
+            "description": "未經授權"
+          },
+          "404": {
+            "description": "用戶不存在"
           }
         }
       }
@@ -3024,7 +3200,7 @@
     },
     {
       "name": "Customers",
-      "description": "客户管理的 API"
+      "description": "客戶管理的 API"
     },
     {
       "name": "Inventory",

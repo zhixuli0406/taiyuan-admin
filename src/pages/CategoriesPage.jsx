@@ -110,6 +110,8 @@ const CategoriesPage = () => {
 
     } catch (err) {
       console.error(err);
+      localStorage.clear()
+      window.location.href = '/'
     }
   };
 

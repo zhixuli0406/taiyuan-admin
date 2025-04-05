@@ -58,8 +58,16 @@ const CreateProduct = () => {
     ];
 
     const updateFiles = (incommingFiles) => {
-        incommingFiles[0]
-        setImages(incommingFiles);
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const validFiles = incommingFiles.filter(file => {
+            if (file.file.size > maxSize) {
+                alert(`文件 ${file.file.name} 超过5MB限制`);
+                return false;
+            }
+            return true;
+        });
+        
+        setImages(validFiles);
     };
     const onDelete = (id) => {
         setImages(images.filter((x) => x.id !== id));
@@ -132,6 +140,11 @@ const CreateProduct = () => {
     }
 
     const handleSubmit = async () => {
+        if (!productName || !description || !selectedCategory || !price || selectedTransport.length === 0) {
+            alert("请填写所有必要字段！");
+            return;
+        }
+        
         setLoading(true);
         let imagesList = [];
         let transportList = [];
@@ -155,7 +168,7 @@ const CreateProduct = () => {
                     "name": productName,
                     "description": description,
                     "price": price,
-                    "category": selectedCategory[0].value,
+                    "category": selectedCategory.value,
                     "images": imagesList,
                     "isCustomizable": isCustomizable,
                     "customizableFields": [
@@ -171,9 +184,13 @@ const CreateProduct = () => {
                 window.location.href = "/products";
             }
         } catch (error) {
-            console.log(error);
-            localStorage.clear();
-            window.location.href = "/";
+            setLoading(false);
+            if (error.response?.status === 401) {
+                localStorage.clear();
+                window.location.href = "/";
+            } else {
+                alert("创建产品失败：" + (error.response?.data?.message || "未知错误"));
+            }
         }
     }
 
@@ -247,7 +264,9 @@ const CreateProduct = () => {
                             <input
                                 type="number"
                                 value={stock}
-                                onChange={(e) => setStock(e.target.value)}
+                                min="0"
+                                step="1"
+                                onChange={(e) => setStock(Math.max(0, parseInt(e.target.value) || 0))}
                                 className="w-full px-4 py-2 bg-gray-700 text-white rounded-md"
                             />
                         </div>
@@ -256,7 +275,9 @@ const CreateProduct = () => {
                             <input
                                 type="number"
                                 value={price}
-                                onChange={(e) => setPrice(e.target.value)}
+                                min="0"
+                                step="0.01"
+                                onChange={(e) => setPrice(Math.max(0, parseFloat(e.target.value) || 0))}
                                 className="w-full px-4 py-2 bg-gray-700 text-white rounded-md"
                             />
                         </div>

@@ -8,9 +8,9 @@ const SIDEBAR_ITEMS = [
     { name: "產品", icon: ShoppingBag, color: "#8B5CF6", href: "/products" },
     { name: "分類", icon: ChartBarStacked, color: "#8B5CF6", href: "/categories" },
     { name: "客戶", icon: Users, color: "#8B5CF6", href: "/users" },
-    { name: "Sales", icon: DollarSign, color: "#8B5CF6", href: "/sales" },
     { name: "訂單", icon: ShoppingCart, color: "#8B5CF6", href: "/orders" },
     { name: "分析", icon: TrendingUp, color: "#8B5CF6", href: "/analytics" },
+    { name: "管理員", icon: Users, color: "#8B5CF6", href: "/admin" },
     { name: "設定", icon: Settings, color: "#8B5CF6", href: "/settings" },
 ];
 

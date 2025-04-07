@@ -9,13 +9,16 @@ import {
   Plus,
 } from "lucide-react";
 import parse from 'html-react-parser';
-import axios from "axios";
+import { productsApi } from "../../core/api";
+import { toast } from "react-toastify";
+import { PacmanLoader } from "react-spinners";
 
 const ProductTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
   const itemsPerPage = 5;
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -39,43 +42,39 @@ const ProductTable = () => {
   };
 
   const getProduct = async () => {
-    const url = window.api + "/products";
+    setLoading(true);
     try {
-      const response = await axios({
-        url: url,
-        method: "get",
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      });
-      if (response.status === 200) {
-        setProducts(response.data.products);
-        setFilteredProducts(response.data.products);
-      }
+      const response = await productsApi.getAll();
+      setProducts(response.products);
+      setFilteredProducts(response.products);
     } catch (error) {
-      console.log(error);
-      localStorage.clear();
-      window.location.href = "/";
+      console.error('獲取產品列表失敗:', error);
+      toast.error(error.response?.data?.message || '獲取產品列表失敗');
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        window.location.href = "/";
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const deleteProduct = async (id) => {
+    if (!window.confirm('確定要刪除此產品嗎？')) {
+      return;
+    }
+    
     try {
-      const url = window.api + "/products/" + id;
-      const response = await axios({
-        url: url,
-        method: "delete",
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      });
-      if (response.status === 200) {
-        window.location.href = "/products";
-      }
+      await productsApi.delete(id);
+      toast.success('產品刪除成功');
+      getProduct(); // 重新獲取產品列表
     } catch (error) {
-      console.log(error);
-      localStorage.clear();
-      window.location.href = "/";
+      console.error('刪除產品失敗:', error);
+      toast.error(error.response?.data?.message || '刪除產品失敗');
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        window.location.href = "/";
+      }
     }
   };
 
@@ -121,118 +120,126 @@ const ProductTable = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-400">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
-                產品名稱
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
-                產品描述
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
-                分類
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
-                價格
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
-                庫存
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
-                運送方式
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-500">
-            {getCurrentPageProducts().map((product) => (
-              <motion.tr
-                key={product._id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1.1, delay: 0.2 }}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <PacmanLoader color="#fde047" />
+        </div>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-400">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
+                    產品名稱
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
+                    產品描述
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
+                    分類
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
+                    價格
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
+                    庫存
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider">
+                    運送方式
+                  </th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-500">
+                {getCurrentPageProducts().map((product) => (
+                  <motion.tr
+                    key={product._id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1.1, delay: 0.2 }}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 flex gap-4 items-center">
+                      <img
+                        src={product.images[0]}
+                        alt="Product_Image"
+                        className="size-10"
+                      />
+                      {product.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
+                      {handleHtmlParse(product.description)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
+                      {product.categoryName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
+                      $ {product.price}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
+                      {product.stock}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
+                      {product.transport.toString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium h-full">
+                      <div className="flex items-center gap-4 h-full">
+                        <button
+                          className="text-blue-500 hover:text-blue-700"
+                          onClick={() => {
+                            window.location.href = "/editproduct/" + product._id;
+                          }}
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(product._id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Enhanced Pagination Controls */}
+          <div className="flex flex-col md:flex-row justify-between mt-4 space-x-2 items-center">
+            <div className="flex items-center">
+              <button
+                onClick={() => paginate(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`text-sm px-3 py-1 border rounded-md ${currentPage === 1
+                  ? "text-gray-400 border-gray-600"
+                  : "text-gray-100 border-gray-300 hover:bg-gray-300 hover:text-gray-800"
+                  }`}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100 flex gap-4 items-center">
-                  <img
-                    src={product.images[0]}
-                    alt="Product_Image"
-                    className="size-10"
-                  />
-                  {product.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
-                  {handleHtmlParse(product.description)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
-                  {product.categoryName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
-                  $ {product.price}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
-                  {product.stock}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
-                  {product.transport.toString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium h-full">
-                  <div className="flex items-center gap-4 h-full">
-                    <button
-                      className="text-blue-500 hover:text-blue-700"
-                      onClick={() => {
-                        window.location.href = "/editproduct/" + product._id;
-                      }}
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      onClick={() => deleteProduct(product._id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                <ChevronLeft size={18} />
+              </button>
+              <span className="mx-2 text-sm font-medium text-gray-100">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => paginate(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`text-sm px-3 py-1 border rounded-md ${currentPage === totalPages
+                  ? "text-gray-400 border-gray-600"
+                  : "text-gray-100 border-gray-300 hover:bg-gray-300 hover:text-gray-800"
+                  }`}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
 
-      {/* Enhanced Pagination Controls */}
-      <div className="flex flex-col md:flex-row justify-between mt-4 space-x-2 items-center">
-        <div className="flex items-center">
-          <button
-            onClick={() => paginate(currentPage - 1)}
-            disabled={currentPage === 1}
-            className={`text-sm px-3 py-1 border rounded-md ${currentPage === 1
-              ? "text-gray-400 border-gray-600"
-              : "text-gray-100 border-gray-300 hover:bg-gray-300 hover:text-gray-800"
-              }`}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <span className="mx-2 text-sm font-medium text-gray-100">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => paginate(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className={`text-sm px-3 py-1 border rounded-md ${currentPage === totalPages
-              ? "text-gray-400 border-gray-600"
-              : "text-gray-100 border-gray-300 hover:bg-gray-300 hover:text-gray-800"
-              }`}
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        <div className="text-sm font-medium text-gray-300 tracking-wider mt-5 md:mt-0">
-          Total Products: {filteredProducts.length}
-        </div>
-      </div>
+            <div className="text-sm font-medium text-gray-300 tracking-wider mt-5 md:mt-0">
+              Total Products: {filteredProducts.length}
+            </div>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 };

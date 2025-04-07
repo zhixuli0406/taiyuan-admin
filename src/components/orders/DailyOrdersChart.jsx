@@ -1,20 +1,25 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-
-const Orders_Data = [
-    { date: "07/01", Orders: 48 },
-    { date: "07/02", Orders: 42 },
-    { date: "07/03", Orders: 49 },
-    { date: "07/04", Orders: 62 },
-    { date: "07/05", Orders: 55 },
-    { date: "07/06", Orders: 52 },
-    { date: "07/07", Orders: 62 },
-
-]
-
 const DailyOrdersChart = () => {
+    const [ordersData, setOrdersData] = useState([]);
+
+    useEffect(() => {
+        // 獲取銷售數據
+        fetch('/analytics/sales')
+            .then(res => res.json())
+            .then(data => {
+                // 格式化數據
+                const formattedData = data.map(item => ({
+                    date: new Date(item._id).toLocaleDateString('zh-TW'),
+                    訂單數: item.dailyOrders
+                }));
+                setOrdersData(formattedData);
+            })
+            .catch(err => console.error('獲取銷售數據失敗:', err));
+    }, []);
+
     return (
         <motion.div
             className='bg-gray-800 bg-opacity-50 shadow-lg backdrop-blur-md rounded-xl p-5 border border-gray-700'
@@ -23,12 +28,12 @@ const DailyOrdersChart = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
         >
             <h2 className='text-xl font-semibold mb-4 text-gray-100'>
-                Daily Orders
+                每日訂單統計
             </h2>
 
             <div className='h-80'>
                 <ResponsiveContainer width={"100%"} height={"100%"}>
-                    <LineChart data={Orders_Data}>
+                    <LineChart data={ordersData}>
                         <CartesianGrid strokeDasharray={'3 3'} stroke='#4b5563' />
                         <XAxis dataKey={"date"} stroke='#9ca3af' />
                         <YAxis stroke='#9ca3af' />
@@ -41,7 +46,7 @@ const DailyOrdersChart = () => {
                         />
                         <Line
                             type="monotone"
-                            dataKey='Orders'
+                            dataKey='訂單數'
                             stroke='#6366f1'
                             strokeWidth={3}
                             dot={{ fill: '#6366f1', strokeWidth: 2, r: 5 }}

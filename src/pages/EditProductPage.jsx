@@ -8,12 +8,14 @@ import {
     FullScreen,
     ImagePreview,
 } from "@dropzone-ui/react";
-import axios from "axios";
+import { productsApi, categoriesApi } from "../core/api";
 import CreatableSelect from "react-select/creatable";
 import ToogleSwitch from "../components/settings/ToogleSwitch";
 import "react-quill/dist/quill.snow.css";
 import { PacmanLoader } from "react-spinners";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+
 const EditProduct = () => {
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
@@ -72,63 +74,51 @@ const EditProduct = () => {
     };
 
     const getCategoryList = async () => {
-        const url = window.api + "/categories";
         try {
-            const response = await axios({
-                url: url,
-                method: "get",
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token"),
-                },
+            const response = await categoriesApi.getAll();
+            let categoryList = [];
+            response.categories.forEach((category) => {
+                if (category.parentCategory !== null)
+                    categoryList.push({
+                        value: category._id,
+                        label: category.parentCategory.name + " / " + category.name,
+                    });
+                else categoryList.push({ value: category._id, label: category.name });
             });
-            if (response.status === 200) {
-                let categoryList = [];
-                response.data.categories.forEach((category) => {
-                    if (category.parentCategory !== null)
-                        categoryList.push({
-                            value: category._id,
-                            label: category.parentCategory.name + " / " + category.name,
-                        });
-                    else categoryList.push({ value: category._id, label: category.name });
-                });
-                setCategory(categoryList);
-            }
+            setCategory(categoryList);
         } catch (error) {
-            console.log(error);
-            localStorage.clear();
-            window.location.href = "/";
+            console.error('獲取分類列表失敗:', error);
+            toast.error(error.response?.data?.message || '獲取分類列表失敗');
+            if (error.response?.status === 401) {
+                localStorage.clear();
+                window.location.href = "/";
+            }
         }
     };
 
     const getProductFromID = async (id) => {
-        const url = window.api + "/products/" + id;
         try {
-            const response = await axios({
-                url: url,
-                method: "get",
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token"),
-                },
-            });
-            if (response.status === 200) {
-                const data = response.data.product;
-                let transportList = [];
-                for (let i = 0; i < data.transport.length; i++) {
-                    transportList.push({ value: data.transport[i], label: data.transport[i] });
-                }
-                setProductName(data.name);
-                setDescription(data.description);
-                setImageURLList(data.images);
-                setSelectedCategory({ value: data.category._id, label: data.categoryName });
-                setSelectedTransport(transportList);
-                setIsCustomizable(data.isCustomizable);
-                setPrice(data.price);
-                setStock(data.stock);
+            const response = await productsApi.getById(id);
+            const data = response.product;
+            let transportList = [];
+            for (let i = 0; i < data.transport.length; i++) {
+                transportList.push({ value: data.transport[i], label: data.transport[i] });
             }
+            setProductName(data.name);
+            setDescription(data.description);
+            setImageURLList(data.images);
+            setSelectedCategory({ value: data.category._id, label: data.categoryName });
+            setSelectedTransport(transportList);
+            setIsCustomizable(data.isCustomizable);
+            setPrice(data.price);
+            setStock(data.stock);
         } catch (error) {
-            console.log(error);
-            localStorage.clear();
-            window.location.href = "/";
+            console.error('獲取產品詳情失敗:', error);
+            toast.error(error.response?.data?.message || '獲取產品詳情失敗');
+            if (error.response?.status === 401) {
+                localStorage.clear();
+                window.location.href = "/";
+            }
         }
     }
 
@@ -141,27 +131,18 @@ const EditProduct = () => {
 
     const handleOnCreate = async (inputValue) => {
         try {
-            const url = window.api + "/categories"
-            const response = await axios({
-                url: url,
-                method: "post",
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token"),
-                },
-                data: {
-                    "name": inputValue,
-                    "description": inputValue,
-                    "isActive": true,
-                    "parentCategory": null
-                }
+            const response = await categoriesApi.create({
+                name: inputValue,
+                description: inputValue,
+                isActive: true,
+                parentCategory: null
             });
-            if (response.status === 200) {
-                const name = response.data.category.name;
-                const id = response.data.category._id;
-                setCategory((prev) => [...prev, { value: id, label: name }]);
-            }
+            const name = response.category.name;
+            const id = response.category._id;
+            setCategory((prev) => [...prev, { value: id, label: name }]);
         } catch (error) {
-            console.log(error);
+            console.error('創建分類失敗:', error);
+            toast.error(error.response?.data?.message || '創建分類失敗');
         }
     }
 
@@ -182,37 +163,30 @@ const EditProduct = () => {
             transportList.push(t.value);
         }
         try {
-            const url = window.api + "/products/" + id;
-            const response = await axios({
-                url: url,
-                method: "put",
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token"),
-                },
-                data: {
-                    "name": productName,
-                    "description": description,
-                    "price": price,
-                    "category": selectedCategory.value,
-                    "images": imageURLList,
-                    "newImages": imagesList,
-                    "isCustomizable": isCustomizable,
-                    "customizableFields": [
-                        "備註",
-                    ],
-                    "stock": stock,
-                    "transport": transportList,
-                    "isFeatured": true
-                },
+            await productsApi.update(id, {
+                name: productName,
+                description: description,
+                price: price,
+                category: selectedCategory.value,
+                images: imageURLList,
+                newImages: imagesList,
+                isCustomizable: isCustomizable,
+                customizableFields: ["備註"],
+                stock: stock,
+                transport: transportList,
+                isFeatured: true
             });
-            if (response.status === 200) {
-                setLoading(false);
-                window.location.href = "/products";
-            }
+            toast.success('產品更新成功');
+            window.location.href = "/products";
         } catch (error) {
-            console.log(error);
-            localStorage.clear();
-            window.location.href = "/";
+            console.error('更新產品失敗:', error);
+            toast.error(error.response?.data?.message || '更新產品失敗');
+            if (error.response?.status === 401) {
+                localStorage.clear();
+                window.location.href = "/";
+            }
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -223,7 +197,7 @@ const EditProduct = () => {
 
     return (
         <div className="flex-1 overflow-auto relative z-10 bg-gray-900" >
-            <Header title="新增產品" />
+            <Header title="編輯產品" />
 
             {/* STAT DATA  */}
             <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
@@ -287,7 +261,9 @@ const EditProduct = () => {
                             <input
                                 type="number"
                                 value={stock}
-                                onChange={(e) => setStock(e.target.value)}
+                                min="0"
+                                step="1"
+                                onChange={(e) => setStock(Math.max(0, parseInt(e.target.value) || 0))}
                                 className="w-full px-4 py-2 bg-gray-700 text-white rounded-md"
                             />
                         </div>
@@ -296,12 +272,13 @@ const EditProduct = () => {
                             <input
                                 type="number"
                                 value={price}
-                                onChange={(e) => setPrice(e.target.value)}
+                                min="0"
+                                step="0.01"
+                                onChange={(e) => setPrice(Math.max(0, parseFloat(e.target.value) || 0))}
                                 className="w-full px-4 py-2 bg-gray-700 text-white rounded-md"
                             />
                         </div>
                     </div>
-
                     <div className="flex flex-col space-y-1 mb-4">
                         <label className="text-sm text-gray-300">產品描述</label>
                         <ReactQuill
@@ -310,103 +287,105 @@ const EditProduct = () => {
                             onChange={setDescription}
                             modules={modules}
                             formats={formats}
+                            className="bg-gray-700 text-white rounded-md"
                         />
                     </div>
-
                     <div className="flex flex-col space-y-1 mb-4">
-                        <label className="text-sm text-gray-300">圖片</label>
-                        <div className="flex flex-wrap gap-4 p-4">
-                            {imageURLList.map((url, index) => (
-                                <div key={url} className="relative group">
-                                    {/* 圖片 */}
-                                    <img
-                                        src={url}
-                                        alt="Gallery"
-                                        className="w-[150px] h-[150px] object-cover rounded-md border shadow-md"
-                                    />
-                                    {/* 刪除按鈕 */}
-                                    <button
-                                        onClick={() => handleRemove(index)}
-                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-80 hover:opacity-100 transition-opacity">
-                                        Ｘ
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                        <Dropzone onChange={updateFiles} value={images} accept="image/*">
-                            {images.map((images) => (
-                                <FileMosaic
-                                    {...images}
-                                    key={images.id}
-                                    onDelete={onDelete}
-                                    onSee={handleSee}
-                                    resultOnTooltip
-                                    alwaysActive
-                                    preview
-                                    info
-                                />
+                        <label className="text-sm text-gray-300">產品圖片</label>
+                        <Dropzone
+                            onChange={updateFiles}
+                            value={images}
+                            maxFiles={5}
+                            maxFileSize={5 * 1024 * 1024}
+                            accept="image/*"
+                            label="拖放圖片到這裡或點擊上傳"
+                            color="#4f46e5"
+                            minHeight="195px"
+                            maxHeight="300px"
+                            onClean={onDelete}
+                            onSee={handleSee}
+                            translation={{
+                                dictDefaultMessage: "拖放圖片到這裡或點擊上傳",
+                                dictFallbackMessage: "您的瀏覽器不支持拖放上傳",
+                                dictFileTooBig: "文件太大",
+                                dictInvalidFileType: "不支持的文件類型",
+                                dictResponseError: "上傳失敗",
+                                dictCancelUpload: "取消上傳",
+                                dictUploadCanceled: "上傳已取消",
+                                dictCancelUploadConfirmation: "確定要取消上傳嗎？",
+                                dictRemoveFile: "刪除文件",
+                                dictMaxFilesExceeded: "超過最大文件數量限制",
+                            }}
+                        >
+                            {images.map((file) => (
+                                <FileMosaic {...file} preview />
                             ))}
                         </Dropzone>
+                        <FullScreen
+                            open={imageSrc !== undefined}
+                            onClose={() => setImageSrc(undefined)}
+                            src={imageSrc}
+                        />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col space-y-1 mb-4">
-                            <label className="text-sm text-gray-300">運送方式</label>
-                            <CreatableSelect
-                                isClearable
-                                isMulti
-                                options={transport}
-                                onChange={(selectedOptions) => setSelectedTransport(selectedOptions)}
-                                value={selectedTransport}
-                                styles={{
-                                    control: (baseStyles) => ({
-                                        ...baseStyles,
-                                        borderColor: "rgb(55 65 81 / var(--tw-bg-opacity, 1))",
-                                        backgroundColor: "rgb(55 65 81 / var(--tw-bg-opacity, 1))",
-                                    }),
-                                    input: (baseStyles) => ({
-                                        ...baseStyles,
-                                        color: "rgb(255 255 255 / var(--tw-text-opacity, 1))",
-                                    }),
-                                    singleValue: (baseStyles) => ({
-                                        ...baseStyles,
-                                        color: "rgb(255 255 255 / var(--tw-text-opacity, 1))",
-                                    }),
-                                    menu: (baseStyles) => ({
-                                        ...baseStyles,
-                                        backgroundColor: "rgb(55 65 81)",
-                                    }),
-                                    option: (baseStyles, state) => ({
-                                        ...baseStyles,
-                                        backgroundColor: state.isFocused
-                                            ? "#111827"
-                                            : "rgb(55 65 81)",
-                                    }),
-                                }}
-                            />
-                        </div>
-                        <div className="flex flex-col space-y-1 mb-4">
-                            <ToogleSwitch
-                                Label={"是否開啟備注欄位"}
-                                isOn={isCustomizable}
-                                onToggle={() => setIsCustomizable(!isCustomizable)}
-                            />
-                        </div>
+                    <div className="flex flex-col space-y-1 mb-4">
+                        <label className="text-sm text-gray-300">運送方式</label>
+                        <CreatableSelect
+                            isMulti
+                            options={transport}
+                            onChange={(selectedOptions) => setSelectedTransport(selectedOptions)}
+                            value={selectedTransport}
+                            styles={{
+                                control: (baseStyles) => ({
+                                    ...baseStyles,
+                                    borderColor: "rgb(55 65 81 / var(--tw-bg-opacity, 1))",
+                                    backgroundColor: "rgb(55 65 81 / var(--tw-bg-opacity, 1))",
+                                }),
+                                input: (baseStyles) => ({
+                                    ...baseStyles,
+                                    color: "rgb(255 255 255 / var(--tw-text-opacity, 1))",
+                                }),
+                                multiValue: (baseStyles) => ({
+                                    ...baseStyles,
+                                    backgroundColor: "rgb(31 41 55)",
+                                }),
+                                multiValueLabel: (baseStyles) => ({
+                                    ...baseStyles,
+                                    color: "rgb(255 255 255 / var(--tw-text-opacity, 1))",
+                                }),
+                                menu: (baseStyles) => ({
+                                    ...baseStyles,
+                                    backgroundColor: "rgb(55 65 81)",
+                                }),
+                                option: (baseStyles, state) => ({
+                                    ...baseStyles,
+                                    backgroundColor: state.isFocused
+                                        ? "#111827"
+                                        : "rgb(55 65 81)",
+                                }),
+                            }}
+                        />
                     </div>
-                    {loading ? <PacmanLoader color="#fde047" className="mt-4 ml-2" /> :
+                    <div className="flex flex-col space-y-1 mb-4">
+                        <label className="text-sm text-gray-300">是否可客製化</label>
+                        <ToogleSwitch
+                            isOn={isCustomizable}
+                            handleToggle={() => setIsCustomizable(!isCustomizable)}
+                        />
+                    </div>
+                    <div className="flex justify-end mt-6">
                         <button
-                            className='bg-indigo-600 hover:bg-indigo-800 text-white font-semibold py-2 px-6 rounded transition duration-300 w-full sm:w-auto'
                             onClick={handleSubmit}
+                            disabled={loading}
+                            className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md flex items-center gap-2"
                         >
-                            更新產品
-                        </button>}
-
+                            {loading ? (
+                                <PacmanLoader color="#ffffff" size={10} />
+                            ) : (
+                                "更新產品"
+                            )}
+                        </button>
+                    </div>
                 </motion.div>
-                <FullScreen
-                    open={imageSrc !== undefined}
-                    onClose={() => setImageSrc(undefined)}
-                >
-                    <ImagePreview src={imageSrc} />
-                </FullScreen>
             </main>
         </div>
     );

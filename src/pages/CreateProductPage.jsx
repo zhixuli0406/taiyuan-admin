@@ -8,11 +8,13 @@ import {
     FullScreen,
     ImagePreview,
 } from "@dropzone-ui/react";
-import axios from "axios";
+import { productsApi } from "../core/api";
 import CreatableSelect from "react-select/creatable";
 import ToogleSwitch from "../components/settings/ToogleSwitch";
 import "react-quill/dist/quill.snow.css";
 import { PacmanLoader } from "react-spinners";
+import { toast } from "react-toastify";
+
 const CreateProduct = () => {
     const [loading, setLoading] = useState(false);
     const [productName, setProductName] = useState("");
@@ -61,7 +63,7 @@ const CreateProduct = () => {
         const maxSize = 5 * 1024 * 1024; // 5MB
         const validFiles = incommingFiles.filter(file => {
             if (file.file.size > maxSize) {
-                alert(`文件 ${file.file.name} 超过5MB限制`);
+                toast.error(`文件 ${file.file.name} 超过5MB限制`);
                 return false;
             }
             return true;
@@ -77,31 +79,25 @@ const CreateProduct = () => {
     };
 
     const getCategoryList = async () => {
-        const url = window.api + "/categories";
         try {
-            const response = await axios({
-                url: url,
-                method: "get",
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token"),
-                },
+            const response = await productsApi.getCategories();
+            let categoryList = [];
+            response.data.categories.forEach((category) => {
+                if (category.parentCategory !== null)
+                    categoryList.push({
+                        value: category._id,
+                        label: category.parentCategory.name + " / " + category.name,
+                    });
+                else categoryList.push({ value: category._id, label: category.name });
             });
-            if (response.status === 200) {
-                let categoryList = [];
-                response.data.categories.forEach((category) => {
-                    if (category.parentCategory !== null)
-                        categoryList.push({
-                            value: category._id,
-                            label: category.parentCategory.name + " / " + category.name,
-                        });
-                    else categoryList.push({ value: category._id, label: category.name });
-                });
-                setCategory(categoryList);
-            }
+            setCategory(categoryList);
         } catch (error) {
-            console.log(error);
-            localStorage.clear();
-            window.location.href = "/";
+            console.error('獲取分類列表失敗:', error);
+            toast.error(error.response?.data?.message || '獲取分類列表失敗');
+            if (error.response?.status === 401) {
+                localStorage.clear();
+                window.location.href = "/";
+            }
         }
     };
 
@@ -114,34 +110,25 @@ const CreateProduct = () => {
 
     const handleOnCreate = async (inputValue) => {
         try {
-            const url = window.api + "/categories"
-            const response = await axios({
-                url: url,
-                method: "post",
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token"),
-                },
-                data: {
-                    "name": inputValue,
-                    "description": inputValue,
-                    "isActive": true,
-                    "parentCategory": null
-                }
+            const response = await productsApi.createCategory({
+                name: inputValue,
+                description: inputValue,
+                isActive: true,
+                parentCategory: null
             });
-            if (response.status === 200) {
-                const name = response.data.category.name;
-                const id = response.data.category._id;
-                setCategory((prev) => [...prev, { value: id, label: name }]);
-                setSelectedCategory({value: id, label: name});
-            }
+            const name = response.data.category.name;
+            const id = response.data.category._id;
+            setCategory((prev) => [...prev, { value: id, label: name }]);
+            setSelectedCategory({value: id, label: name});
         } catch (error) {
-            console.log(error);
+            console.error('創建分類失敗:', error);
+            toast.error(error.response?.data?.message || '創建分類失敗');
         }
     }
 
     const handleSubmit = async () => {
         if (!productName || !description || !selectedCategory || !price || selectedTransport.length === 0) {
-            alert("请填写所有必要字段！");
+            toast.error("請填寫所有必要字段！");
             return;
         }
         
@@ -157,40 +144,29 @@ const CreateProduct = () => {
             transportList.push(t.value);
         }
         try {
-            const url = window.api + "/products";
-            const response = await axios({
-                url: url,
-                method: "post",
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token"),
-                },
-                data: {
-                    "name": productName,
-                    "description": description,
-                    "price": price,
-                    "category": selectedCategory.value,
-                    "images": imagesList,
-                    "isCustomizable": isCustomizable,
-                    "customizableFields": [
-                        "備註",
-                    ],
-                    "stock": stock,
-                    "transport": transportList,
-                    "isFeatured": true
-                },
+            await productsApi.createProduct({
+                name: productName,
+                description: description,
+                price: price,
+                category: selectedCategory.value,
+                images: imagesList,
+                isCustomizable: isCustomizable,
+                customizableFields: ["備註"],
+                stock: stock,
+                transport: transportList,
+                isFeatured: true
             });
-            if (response.status === 200) {
-                setLoading(false);
-                window.location.href = "/products";
-            }
+            toast.success('產品創建成功');
+            window.location.href = "/products";
         } catch (error) {
-            setLoading(false);
+            console.error('創建產品失敗:', error);
+            toast.error(error.response?.data?.message || '創建產品失敗');
             if (error.response?.status === 401) {
                 localStorage.clear();
                 window.location.href = "/";
-            } else {
-                alert("创建产品失败：" + (error.response?.data?.message || "未知错误"));
             }
+        } finally {
+            setLoading(false);
         }
     }
 

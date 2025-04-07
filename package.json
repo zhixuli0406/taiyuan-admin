@@ -14,6 +14,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dropzone-ui/react": "^7.0.4",
     "@forecasthq/react-virtualized-nested-dnd": "^2.8.23",
+    "@heroicons/react": "^2.2.0",
     "@react-login-page/page1": "^1.0.4",
     "@react-login-page/page6": "^1.0.4",
     "array-move": "^4.0.0",

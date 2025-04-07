@@ -7,36 +7,28 @@ import LoginPage, {
 } from "@react-login-page/page6";
 import LoginLogo from "react-login-page/logo-rect";
 import { ToastContainer, toast } from "react-toastify";
-import axios from "axios";
+import { adminApi } from "../core/api";
 
 const SigninPage = () => {
   const handleSubmit = async (even) => {
     even.preventDefault();
     const formData = new FormData(even.target);
     const data = Object.fromEntries(formData);
-    const username = data.userUserName;
+    const email = data.userUserName;
     const password = data.userPassword;
-    if (username.length === 0 && password.length === 0) {
+    if (email.length === 0 && password.length === 0) {
       toast.error("請輸入帳號密碼");
       return;
     }
     try {
-      const url = window.api + "/admin/login";
-      const response = await axios({
-        url: url,
-        method: "post",
-        data: {
-          email: username,
-          password: password,
-        },
-      });
-      if (response.status === 200) {
+      const response = await adminApi.login(email, password);
+      if (response.token) {
         window.location.href = "/";
-        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("token", response.token);
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response.data.error);
+      toast.error(error.response?.data?.error || "登入失敗");
     }
   };
 

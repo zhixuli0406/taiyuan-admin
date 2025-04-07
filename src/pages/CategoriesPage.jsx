@@ -3,9 +3,10 @@ import SortableTree, { getFlatDataFromTree } from 'react-sortable-tree';
 import 'react-sortable-tree/style.css';
 import './styles/customSortableTree.css';
 import Header from '../components/common_components/Header';
-import axios from 'axios';
+import { categoriesApi } from '../core/api';
 import MyDarkTheme from '../themes/MyDarkTheme';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 
 // 自訂 Modal，用 Tailwind 寫最基本的開關顯示
 const Modal = ({ isOpen, onClose, children }) => {
@@ -58,13 +59,8 @@ const CategoriesPage = () => {
   // 取得分類資料並轉成 React Sortable Tree 需要的格式
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(window.api + '/categories', {
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('token'),
-        },
-      });
-
-      const data = res.data.categories || [];
+      const response = await categoriesApi.getAll();
+      const data = response.categories || [];
       // 將 categories 陣列中的每個項目轉成 treeData
       const newTreeData = data.map((cat) => ({
         _id: cat._id,
@@ -108,10 +104,13 @@ const CategoriesPage = () => {
       }));
       setRootCategories(rootOnly);
 
-    } catch (err) {
-      console.error(err);
-      localStorage.clear()
-      window.location.href = '/'
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || '獲取分類列表失敗');
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        window.location.href = '/';
+      }
     }
   };
 
@@ -164,45 +163,33 @@ const CategoriesPage = () => {
     try {
       if (isEditing) {
         // 編輯
-        const url = `${window.api}/categories/${categoryForm._id}`;
-        await axios.put(
-          url,
-          {
-            name: categoryForm.name,
-            description: categoryForm.description,
-            isActive: categoryForm.isActive,
-            parentCategory: categoryForm.parentCategory?._id ?? null,
-            order: categoryForm.order,
-          },
-          {
-            headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('token'),
-            },
-          }
-        );
+        await categoriesApi.update(categoryForm._id, {
+          name: categoryForm.name,
+          description: categoryForm.description,
+          isActive: categoryForm.isActive,
+          parentCategory: categoryForm.parentCategory?._id ?? null,
+          order: categoryForm.order,
+        });
       } else {
         // 新增
-        const url = `${window.api}/categories`;
-        await axios.post(
-          url,
-          {
-            name: categoryForm.name,
-            description: categoryForm.description,
-            isActive: categoryForm.isActive,
-            parentCategory: categoryForm.parentCategory?._id ?? null,
-            order: categoryForm.order,
-          },
-          {
-            headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('token'),
-            },
-          }
-        );
+        await categoriesApi.create({
+          name: categoryForm.name,
+          description: categoryForm.description,
+          isActive: categoryForm.isActive,
+          parentCategory: categoryForm.parentCategory?._id ?? null,
+          order: categoryForm.order,
+        });
       }
       closeModal();
       fetchCategories();
-    } catch (err) {
-      console.error(err);
+      toast.success(isEditing ? '分類更新成功' : '分類創建成功');
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || (isEditing ? '更新分類失敗' : '創建分類失敗'));
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        window.location.href = '/';
+      }
     }
   };
 
@@ -210,15 +197,16 @@ const CategoriesPage = () => {
   const handleDeleteCategory = async (node) => {
     if (!window.confirm('確定要刪除這個分類嗎？')) return;
     try {
-      await axios.delete(`${window.api}/categories/${node._id}`, {
-        headers: {
-          Authorization: 'Bearer ' + localStorage.getItem('token'),
-        },
-      });
+      await categoriesApi.delete(node._id);
       fetchCategories();
-    } catch (err) {
-      console.error(err);
-      window.alert(err.response.data.error);
+      toast.success('分類刪除成功');
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || '刪除分類失敗');
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        window.location.href = '/';
+      }
     }
   };
 
@@ -240,185 +228,157 @@ const CategoriesPage = () => {
         // 如果 parentNode 存在，則表示有父級
         const parentCategory = parentNode ? parentNode._id : null;
         // 用 PUT 更新
-        await axios.put(
-          `${window.api}/categories/${node._id}`,
-          {
-            name: node.title,
-            description: node.description,
-            isActive: node.isActive,
-            parentCategory,
-            order: treeIndex,
-          },
-          {
-            headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('token'),
-            },
-          }
-        );
+        await categoriesApi.update(node._id, {
+          name: node.title,
+          description: node.description,
+          isActive: node.isActive,
+          parentCategory,
+          order: treeIndex,
+        });
       }
-    } catch (err) {
-      console.error(err);
+      toast.success('分類順序更新成功');
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || '更新分類順序失敗');
+      if (error.response?.status === 401) {
+        localStorage.clear();
+        window.location.href = '/';
+      }
     }
   };
 
-  // 計算所有節點（包含子節點）的數量，用於自動設定 order
+  // 計算所有節點數量
   const countAllNodes = (nodes) => {
     let count = 0;
-    const stack = [...nodes];
-    while (stack.length) {
-      const node = stack.pop();
+    nodes.forEach((node) => {
       count++;
-      if (node.children) stack.push(...node.children);
-    }
+      if (node.children) {
+        count += countAllNodes(node.children);
+      }
+    });
     return count;
   };
 
   return (
     <div className="flex-1 overflow-auto relative z-10 bg-gray-900">
-      <Header title="分類" />
+      <Header title="分類管理" />
       <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-100">分類管理</h2>
-          <button
-            className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-2 px-4 rounded-md flex"
-            onClick={openAddModal}
-          >
-            新增分類
-          </button>
-        </div>
-        <div className="bg-gray-800 bg-opacity-50 shadow-lg backdrop-blur-md rounded-xl p-5 border border-gray-700 mb-6 h-[80vh] overflow-y-auto">
-          <SortableTree
-            treeData={treeData}
-            onChange={(newTreeData) => setTreeData(newTreeData)}
-            onMoveNode={handleMoveNode}
-            maxDepth={2}
-            theme={MyDarkTheme}
-            generateNodeProps={({ node }) => ({
-              style: {
-                backgroundColor: '#2d2d2d',
-                border: 'none',
-              },
-              title: (
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-semibold text-white">{node.title}</span>
-                </div>
-              ),
-              buttons: [
-                <button
-                  key="edit"
-                  className="mr-3 text-blue-400 hover:text-blue-200"
-                  onClick={() => openEditModal(node)}
-                >
-                  <svg className="w-6 h-6 text-gray-800 dark:text-blue-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m14.304 4.844 2.852 2.852M7 7H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4.5m2.409-9.91a2.017 2.017 0 0 1 0 2.853l-6.844 6.844L8 14l.713-3.565 6.844-6.844a2.015 2.015 0 0 1 2.852 0Z" />
-                  </svg>
-
-                </button>,
-                <button
-                  key="delete"
-                  className="text-red-400 hover:text-red-200"
-                  onClick={() => handleDeleteCategory(node)}
-                >
-                  <svg className="w-6 h-6 text-gray-800 dark:text-red-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 7h14m-9 3v8m4-8v8M10 3h4a1 1 0 0 1 1 1v3H9V4a1 1 0 0 1 1-1ZM6 7h12v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7Z" />
-                  </svg>
-
-                </button>,
-              ],
-            })}
-          />
+        <div className="bg-gray-800 bg-opacity-50 shadow-lg backdrop-blur-md rounded-xl p-5 border border-gray-700 mb-6 relative z-10">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-100">分類列表</h2>
+            <button
+              onClick={openAddModal}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md"
+            >
+              新增分類
+            </button>
+          </div>
+          <div style={{ height: 600 }}>
+            <SortableTree
+              treeData={treeData}
+              onChange={handleMoveNode}
+              theme={MyDarkTheme}
+              canDrag={({ node }) => !node.children || node.children.length === 0}
+              generateNodeProps={({ node }) => ({
+                buttons: [
+                  <button
+                    key="edit"
+                    className="text-blue-500 hover:text-blue-700 mr-2"
+                    onClick={() => openEditModal(node)}
+                  >
+                    編輯
+                  </button>,
+                  <button
+                    key="delete"
+                    className="text-red-500 hover:text-red-700"
+                    onClick={() => handleDeleteCategory(node)}
+                  >
+                    刪除
+                  </button>,
+                ],
+              })}
+            />
+          </div>
         </div>
       </main>
-
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        <h2 className="text-xl text-gray-100 mb-4">
+        <h2 className="text-xl font-semibold text-gray-100 mb-4">
           {isEditing ? '編輯分類' : '新增分類'}
         </h2>
-        <div className="flex flex-col space-y-4">
-          <label className="text-gray-300 flex flex-col">
-            名稱
+        <form className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              分類名稱
+            </label>
             <input
-              className="mt-1 p-2 rounded bg-gray-700 text-white"
               type="text"
               name="name"
               value={categoryForm.name}
               onChange={handleChange}
+              className="w-full px-3 py-2 bg-gray-700 text-white rounded-md"
+              required
             />
-          </label>
-          <label className="text-gray-300 flex flex-col">
-            描述
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              描述
+            </label>
             <textarea
-              className="mt-1 p-2 rounded bg-gray-700 text-white"
               name="description"
               value={categoryForm.description}
               onChange={handleChange}
+              className="w-full px-3 py-2 bg-gray-700 text-white rounded-md"
+              rows="3"
             />
-          </label>
-          <label className="text-gray-300 flex items-center space-x-2">
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              父分類
+            </label>
+            <select
+              name="parentCategory"
+              value={categoryForm.parentCategory?._id || ''}
+              onChange={(e) => {
+                const selectedId = e.target.value;
+                setCategoryForm((prev) => ({
+                  ...prev,
+                  parentCategory: selectedId
+                    ? { _id: selectedId }
+                    : null,
+                }));
+              }}
+              className="w-full px-3 py-2 bg-gray-700 text-white rounded-md"
+            >
+              <option value="">無</option>
+              {rootCategories.map((cat) => (
+                <option key={cat._id} value={cat._id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center">
             <input
               type="checkbox"
               name="isActive"
               checked={categoryForm.isActive}
               onChange={handleChange}
+              className="h-4 w-4 text-blue-500 rounded border-gray-300 focus:ring-blue-500"
             />
-            <span>是否啟用</span>
-          </label>
-          <label className="text-gray-300 flex flex-col">
-            父層分類
-            <select
-              className="mt-1 p-2 rounded bg-gray-700 text-white"
-              name="parentCategory"
-              value={categoryForm.parentCategory?._id || ''}
-              onChange={(e) => {
-                const selectedId = e.target.value;
-                if (!selectedId) {
-                  setCategoryForm((prev) => ({
-                    ...prev,
-                    parentCategory: null,
-                  }));
-                } else {
-                  setCategoryForm((prev) => ({
-                    ...prev,
-                    parentCategory: { _id: selectedId },
-                  }));
-                }
-              }}
+            <label className="ml-2 block text-sm text-gray-300">
+              啟用
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveCategory}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md"
             >
-              <option value="">無</option>
-              {rootCategories
-                .filter((cat) => cat._id !== categoryForm._id)
-                .map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label className="text-gray-300 flex flex-col">
-            排序 Order
-            <input
-              className="mt-1 p-2 rounded bg-gray-700 text-white"
-              type="number"
-              name="order"
-              value={categoryForm.order}
-              onChange={handleChange}
-            />
-          </label>
-        </div>
-        <div className="flex justify-end mt-6">
-          <button
-            className="bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded mr-2"
-            onClick={handleSaveCategory}
-          >
-            確認
-          </button>
-          <button
-            className="bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded"
-            onClick={closeModal}
-          >
-            取消
-          </button>
-        </div>
+              儲存
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

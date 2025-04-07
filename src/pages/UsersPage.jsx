@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { UserCheck, UserIcon, UserPlus, UserX } from 'lucide-react'
-import axios from 'axios'
+import { customersApi } from '../core/api'
+import { toast } from 'react-toastify'
 
 import Header from '../components/common_components/Header'
 import StatCards from '../components/common_components/StatCards'
@@ -24,20 +25,19 @@ const UsersPage = () => {
         const fetchUsers = async () => {
             try {
                 setLoading(true)
-                const response = await axios.get(`${window.api}/customers?page=${currentPage}&per_page=${perPage}`, {
-                    headers: {
-                        Authorization: 'Bearer ' + localStorage.getItem('token'),
-                    },
+                const response = await customersApi.getAll({
+                    page: currentPage,
+                    per_page: perPage
                 })
-                setUsers(response.data.customers)
+                setUsers(response.customers)
 
                 // 計算用戶統計數據
-                const total = response.data.total
-                const active = response.data.customers.filter(user => 
+                const total = response.total
+                const active = response.customers.filter(user => 
                     new Date(user.last_login) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
                 ).length
-                const verified = response.data.customers.filter(user => user.email_verified).length
-                const social = response.data.customers.filter(user => 
+                const verified = response.customers.filter(user => user.email_verified).length
+                const social = response.customers.filter(user => 
                     user.identities.some(identity => identity.isSocial)
                 ).length
 
@@ -47,11 +47,14 @@ const UsersPage = () => {
                     verifiedUsers: verified,
                     socialUsers: social
                 })
-            } catch (err) {
-                setError(err.message)
-                console.error('獲取用戶數據失敗:', err)
-                localStorage.clear()
-                window.location.href = '/'
+            } catch (error) {
+                setError(error.message)
+                console.error('獲取用戶數據失敗:', error)
+                toast.error(error.response?.data?.message || '獲取用戶數據失敗')
+                if (error.response?.status === 401) {
+                    localStorage.clear()
+                    window.location.href = '/'
+                }
             } finally {
                 setLoading(false)
             }
@@ -60,8 +63,23 @@ const UsersPage = () => {
         fetchUsers()
     }, [currentPage, perPage])
 
-    if (loading) return <div>載入中...</div>
-    if (error) return <div>錯誤: {error}</div>
+    if (loading) return (
+        <div className="flex-1 overflow-auto relative z-10 bg-gray-900">
+            <Header title="用戶管理" />
+            <div className="flex justify-center items-center h-full">
+                <div className="text-gray-300">載入中...</div>
+            </div>
+        </div>
+    )
+
+    if (error) return (
+        <div className="flex-1 overflow-auto relative z-10 bg-gray-900">
+            <Header title="用戶管理" />
+            <div className="flex justify-center items-center h-full">
+                <div className="text-red-500">錯誤: {error}</div>
+            </div>
+        </div>
+    )
 
     return (
         <div className='flex-1 overflow-auto relative z-10 bg-gray-900'>

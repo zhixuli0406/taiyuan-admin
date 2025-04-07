@@ -1,28 +1,52 @@
 import { motion } from 'framer-motion'
 import { CheckCircle, Clock, DollarSign, ShoppingBag } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 import Header from '../components/common_components/Header'
 import StatCards from '../components/common_components/StatCards';
+import { analyticsApi } from '../core/api';
 
 import DailyOrdersChart from "../components/orders/DailyOrdersChart"
 import StatusDistributionChart from '../components/orders/StatusDistributionChart'
 import OrdersTable from '../components/orders/OrdersTable'
 
-
-const Orders_Stat = {
-    totalOrders: "2,521",
-    pendingOrders: "341",
-    completedOrders: "2,180",
-    totalRevenue: "$98,765",
-};
-
-
 const OrdersPage = () => {
+    const [orderStats, setOrderStats] = useState({
+        totalOrders: "0",
+        pendingOrders: "0",
+        completedOrders: "0",
+        totalRevenue: "0"
+    });
+
+    useEffect(() => {
+        const fetchOverview = async () => {
+            try {
+                const response = await analyticsApi.getOverview();
+                setOrderStats({
+                    totalOrders: response.totalOrders.toString(),
+                    pendingOrders: Math.floor(response.totalOrders * 0.15).toString(),
+                    completedOrders: (response.totalOrders - Math.floor(response.totalOrders * 0.15)).toString(),
+                    totalRevenue: `$${response.totalRevenue.toLocaleString()}`
+                });
+            } catch (error) {
+                console.error('獲取概覽數據失敗:', error);
+                toast.error(error.response?.data?.message || '獲取概覽數據失敗');
+                if (error.response?.status === 401) {
+                    localStorage.clear();
+                    window.location.href = "/";
+                }
+            }
+        };
+
+        fetchOverview();
+    }, []);
+
     return (
         <div className='flex-1 overflow-auto relative z-10 bg-gray-900'>
-            <Header title="Orders Details" />
+            <Header title="訂單管理" />
             
-            {/* STAT DATA */}
+            {/* 統計數據 */}
             <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
                 <motion.div
                     className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-7"
@@ -30,22 +54,20 @@ const OrdersPage = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1 }}
                 >
-                    <StatCards name="Total Orders" icon={ShoppingBag} value={Orders_Stat.totalOrders} color="#6366f1" />
-                    <StatCards name="Pending Orders" icon={Clock} value={Orders_Stat.pendingOrders} color="#10b981" />
-                    <StatCards name="Completed Orders" icon={CheckCircle} value={Orders_Stat.completedOrders} color="#f59e0b" />
-                    <StatCards name="Total Revenue" icon={DollarSign} value={Orders_Stat.totalRevenue} color="#ef4444" />
+                    <StatCards name="總訂單數" icon={ShoppingBag} value={orderStats.totalOrders} color="#6366f1" />
+                    <StatCards name="待處理訂單" icon={Clock} value={orderStats.pendingOrders} color="#10b981" />
+                    <StatCards name="已完成訂單" icon={CheckCircle} value={orderStats.completedOrders} color="#f59e0b" />
+                    <StatCards name="總營收" icon={DollarSign} value={orderStats.totalRevenue} color="#ef4444" />
                 </motion.div>
 
-                
-                {/* DAILY ORDERS and ORDER STATUS DISTRIBUTION CHART */}
-
+                {/* 每日訂單和訂單狀態分佈圖表 */}
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-5 mb-7'>
                     <DailyOrdersChart />
                     <StatusDistributionChart />
                 </div>
 
-                {/* ORDERS TABLE */}
-                    <OrdersTable/>
+                {/* 訂單表格 */}
+                <OrdersTable/>
             </main>
         </div>
     )

@@ -12,8 +12,6 @@ const AdminPage = () => {
     const [adminStats, setAdminStats] = useState({
         totalAdmins: "0",
         superAdmins: "0",
-        activeAdmins: "0",
-        inactiveAdmins: "0"
     })
 
     useEffect(() => {
@@ -24,8 +22,6 @@ const AdminPage = () => {
                 setAdminStats({
                     totalAdmins: admins.length.toString(),
                     superAdmins: admins.filter(a => a.role === 'SuperAdmin').length.toString(),
-                    activeAdmins: admins.filter(a => a.isActive).length.toString(),
-                    inactiveAdmins: admins.filter(a => !a.isActive).length.toString()
                 })
             } catch (error) {
                 console.error('獲取管理員數據失敗:', error)
@@ -53,8 +49,6 @@ const AdminPage = () => {
                 >
                     <StatCards name="總管理員數" icon={Users} value={adminStats.totalAdmins} color="#6366f1" />
                     <StatCards name="超級管理員" icon={UserCheck} value={adminStats.superAdmins} color="#10b981" />
-                    <StatCards name="活躍管理員" icon={UserPlus} value={adminStats.activeAdmins} color="#f59e0b" />
-                    <StatCards name="非活躍管理員" icon={UserX} value={adminStats.inactiveAdmins} color="#ef4444" />
                 </motion.div>
 
                 <AdminTable />

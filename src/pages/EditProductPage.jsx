@@ -6,7 +6,6 @@ import {
     Dropzone,
     FileMosaic,
     FullScreen,
-    ImagePreview,
 } from "@dropzone-ui/react";
 import { productsApi, categoriesApi } from "../core/api";
 import CreatableSelect from "react-select/creatable";
@@ -62,9 +61,62 @@ const EditProduct = () => {
         "link",
     ];
 
-    const updateFiles = (incommingFiles) => {
-        incommingFiles[0]
-        setImages(incommingFiles);
+    const updateFiles = async (incommingFiles) => {
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        const validFiles = incommingFiles.filter(file => {
+            if (file.file.size > maxSize) {
+                toast.error(`檔案 ${file.file.name} 超過5MB限制`);
+                return false;
+            }
+            return true;
+        });
+        
+        try {
+            const uploadedFiles = await Promise.all(validFiles.map(async (file) => {
+                const fileType = `.${file.file.name.split('.').pop()}`;
+                const { data } = await productsApi.getPresignedUrl(fileType);
+                
+                // 使用 XMLHttpRequest 來監控上傳進度
+                const xhr = new XMLHttpRequest();
+                const promise = new Promise((resolve, reject) => {
+                    xhr.upload.addEventListener('progress', (event) => {
+                        if (event.lengthComputable) {
+                            const progress = Math.round((event.loaded * 100) / event.total);
+                            // 更新該檔案的上傳進度
+                            setImages(prev => prev.map(img => 
+                                img.id === file.id ? { ...img, uploadProgress: progress } : img
+                            ));
+                        }
+                    });
+
+                    xhr.addEventListener('load', () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            resolve({
+                                ...file,
+                                imageUrl: data.imageUrl,
+                                uploadProgress: 100
+                            });
+                        } else {
+                            reject(new Error('上傳失敗'));
+                        }
+                    });
+
+                    xhr.addEventListener('error', () => reject(new Error('上傳失敗')));
+                    xhr.addEventListener('abort', () => reject(new Error('上傳已取消')));
+
+                    xhr.open('PUT', data.uploadUrl);
+                    xhr.setRequestHeader('Content-Type', file.file.type);
+                    xhr.send(file.file);
+                });
+
+                return await promise;
+            }));
+            
+            setImages(uploadedFiles);
+        } catch (error) {
+            console.error('上傳圖片失敗:', error);
+            toast.error('上傳圖片失敗');
+        }
     };
     const onDelete = (id) => {
         setImages(images.filter((x) => x.id !== id));
@@ -122,13 +174,6 @@ const EditProduct = () => {
         }
     }
 
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-    });
-
     const handleOnCreate = async (inputValue) => {
         try {
             const response = await categoriesApi.create({
@@ -146,19 +191,9 @@ const EditProduct = () => {
         }
     }
 
-    const handleRemove = (index) => {
-        setImageURLList(imageURLList.filter((_, i) => i !== index));
-    };
-
     const handleSubmit = async () => {
         setLoading(true);
-        let imagesList = [];
         let transportList = [];
-        for (let image of images) {
-            const file = image.file;
-            const base64 = await toBase64(file);
-            imagesList.push(base64.split(',')[1]);
-        }
         for (let t of selectedTransport) {
             transportList.push(t.value);
         }
@@ -169,7 +204,7 @@ const EditProduct = () => {
                 price: price,
                 category: selectedCategory.value,
                 images: imageURLList,
-                newImages: imagesList,
+                newImages: images.map(img => img.imageUrl),
                 isCustomizable: isCustomizable,
                 customizableFields: ["備註"],
                 stock: stock,
@@ -307,18 +342,23 @@ const EditProduct = () => {
                             translation={{
                                 dictDefaultMessage: "拖放圖片到這裡或點擊上傳",
                                 dictFallbackMessage: "您的瀏覽器不支持拖放上傳",
-                                dictFileTooBig: "文件太大",
+                                dictFileTooBig: "檔案太大",
                                 dictInvalidFileType: "不支持的文件類型",
                                 dictResponseError: "上傳失敗",
                                 dictCancelUpload: "取消上傳",
                                 dictUploadCanceled: "上傳已取消",
                                 dictCancelUploadConfirmation: "確定要取消上傳嗎？",
-                                dictRemoveFile: "刪除文件",
-                                dictMaxFilesExceeded: "超過最大文件數量限制",
+                                dictRemoveFile: "刪除檔案",
+                                dictMaxFilesExceeded: "超過最大檔案數量限制",
                             }}
                         >
                             {images.map((file) => (
-                                <FileMosaic {...file} preview />
+                                <FileMosaic
+                                    key={file.id}
+                                    {...file}
+                                    preview
+                                    uploadProgress={file.uploadProgress}
+                                />
                             ))}
                         </Dropzone>
                         <FullScreen

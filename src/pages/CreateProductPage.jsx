@@ -8,7 +8,7 @@ import {
     FullScreen,
     ImagePreview,
 } from "@dropzone-ui/react";
-import { productsApi } from "../core/api";
+import { productsApi, categoriesApi } from "../core/api";
 import CreatableSelect from "react-select/creatable";
 import ToogleSwitch from "../components/settings/ToogleSwitch";
 import "react-quill/dist/quill.snow.css";
@@ -59,17 +59,86 @@ const CreateProduct = () => {
         "link",
     ];
 
-    const updateFiles = (incommingFiles) => {
+    const updateFiles = async (incommingFiles) => {
         const maxSize = 5 * 1024 * 1024; // 5MB
         const validFiles = incommingFiles.filter(file => {
             if (file.file.size > maxSize) {
-                toast.error(`文件 ${file.file.name} 超过5MB限制`);
+                toast.error(`檔案 ${file.file.name} 超過5MB限制`);
                 return false;
             }
             return true;
         });
         
-        setImages(validFiles);
+        try {
+            const uploadedFiles = await Promise.all(validFiles.map(async (file) => {
+                const fileType = `.${file.file.name.split('.').pop()}`;
+                try {
+                    const response = await productsApi.getPresignedUrl(fileType);
+                    
+                    if (!response || !response.uploadUrl || !response.imageUrl) {
+                        throw new Error('獲取預簽名 URL 失敗：返回數據格式不正確');
+                    }
+
+                    console.log('預簽名 URL:', response.uploadUrl);
+                    console.log('文件類型:', file.file.type);
+                    
+                    // 使用 XMLHttpRequest 來監控上傳進度
+                    const xhr = new XMLHttpRequest();
+                    const promise = new Promise((resolve, reject) => {
+                        xhr.upload.addEventListener('progress', (event) => {
+                            if (event.lengthComputable) {
+                                const progress = Math.round((event.loaded * 100) / event.total);
+                                // 更新該檔案的上傳進度
+                                setImages(prev => prev.map(img => 
+                                    img.id === file.id ? { ...img, uploadProgress: progress } : img
+                                ));
+                            }
+                        });
+
+                        xhr.addEventListener('load', () => {
+                            console.log('上傳完成，狀態碼:', xhr.status);
+                            console.log('響應頭:', xhr.getAllResponseHeaders());
+                            console.log('響應內容:', xhr.responseText);
+                            
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                resolve({
+                                    ...file,
+                                    imageUrl: response.imageUrl,
+                                    uploadProgress: 100
+                                });
+                            } else {
+                                console.error('上傳失敗，狀態碼:', xhr.status);
+                                console.error('響應:', xhr.responseText);
+                                reject(new Error(`上傳失敗: ${xhr.status} ${xhr.statusText}`));
+                            }
+                        });
+
+                        xhr.addEventListener('error', (error) => {
+                            console.error('上傳請求錯誤:', error);
+                            reject(new Error('上傳請求錯誤'));
+                        });
+                        
+                        xhr.addEventListener('abort', () => reject(new Error('上傳已取消')));
+
+                        xhr.open('PUT', response.uploadUrl);
+                        // 只設置 Content-Type 請求頭
+                        xhr.setRequestHeader('Content-Type', file.file.type);
+                        xhr.send(file.file);
+                    });
+
+                    return await promise;
+                } catch (error) {
+                    console.error('獲取預簽名 URL 失敗:', error);
+                    toast.error('獲取上傳連結失敗，請稍後再試');
+                    throw error;
+                }
+            }));
+            
+            setImages(uploadedFiles);
+        } catch (error) {
+            console.error('上傳圖片失敗:', error);
+            toast.error('上傳圖片失敗，請稍後再試');
+        }
     };
     const onDelete = (id) => {
         setImages(images.filter((x) => x.id !== id));
@@ -80,9 +149,9 @@ const CreateProduct = () => {
 
     const getCategoryList = async () => {
         try {
-            const response = await productsApi.getCategories();
+            const response = await categoriesApi.getAll();
             let categoryList = [];
-            response.data.categories.forEach((category) => {
+            response.categories.forEach((category) => {
                 if (category.parentCategory !== null)
                     categoryList.push({
                         value: category._id,
@@ -101,13 +170,6 @@ const CreateProduct = () => {
         }
     };
 
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-    });
-
     const handleOnCreate = async (inputValue) => {
         try {
             const response = await productsApi.createCategory({
@@ -116,8 +178,8 @@ const CreateProduct = () => {
                 isActive: true,
                 parentCategory: null
             });
-            const name = response.data.category.name;
-            const id = response.data.category._id;
+            const name = response.category.name;
+            const id = response.category._id;
             setCategory((prev) => [...prev, { value: id, label: name }]);
             setSelectedCategory({value: id, label: name});
         } catch (error) {
@@ -128,28 +190,22 @@ const CreateProduct = () => {
 
     const handleSubmit = async () => {
         if (!productName || !description || !selectedCategory || !price || selectedTransport.length === 0) {
-            toast.error("請填寫所有必要字段！");
+            toast.error("請填寫所有必要欄位！");
             return;
         }
         
         setLoading(true);
-        let imagesList = [];
         let transportList = [];
-        for (let image of images) {
-            const file = image.file;
-            const base64 = await toBase64(file);
-            imagesList.push(base64.split(',')[1]);
-        }
         for (let t of selectedTransport) {
             transportList.push(t.value);
         }
         try {
-            await productsApi.createProduct({
+            await productsApi.create({
                 name: productName,
                 description: description,
                 price: price,
                 category: selectedCategory.value,
-                images: imagesList,
+                images: images.map(img => img.imageUrl),
                 isCustomizable: isCustomizable,
                 customizableFields: ["備註"],
                 stock: stock,
@@ -273,16 +329,17 @@ const CreateProduct = () => {
                     <div className="flex flex-col space-y-1 mb-4">
                         <label className="text-sm text-gray-300">圖片</label>
                         <Dropzone onChange={updateFiles} value={images} accept="image/*">
-                            {images.map((images) => (
+                            {images.map((file) => (
                                 <FileMosaic
-                                    {...images}
-                                    key={images.id}
+                                    {...file}
+                                    key={file.id}
                                     onDelete={onDelete}
                                     onSee={handleSee}
                                     resultOnTooltip
                                     alwaysActive
                                     preview
                                     info
+                                    uploadProgress={file.uploadProgress}
                                 />
                             ))}
                         </Dropzone>

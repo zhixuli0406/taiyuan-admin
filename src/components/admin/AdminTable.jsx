@@ -15,7 +15,6 @@ const AdminTable = () => {
         username: '',
         email: '',
         role: 'Admin',
-        isActive: true
     })
     const itemsPerPage = 6
 
@@ -79,7 +78,7 @@ const AdminTable = () => {
     const handleSave = async () => {
         try {
             if (selectedAdmin) {
-                await adminApi.update(selectedAdmin.id, formData)
+                await adminApi.update(selectedAdmin._id, formData)
                 toast.success('管理員更新成功')
             } else {
                 await adminApi.create(formData)
@@ -155,7 +154,6 @@ const AdminTable = () => {
                             <th className='px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider'>用戶名</th>
                             <th className='px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider'>郵箱</th>
                             <th className='px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider'>角色</th>
-                            <th className='px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider'>狀態</th>
                             <th className='px-6 py-3 text-left text-sm font-medium text-gray-300 uppercase tracking-wider'>操作</th>
                         </tr>
                     </thead>
@@ -178,13 +176,6 @@ const AdminTable = () => {
                                         admin.role === 'SuperAdmin' ? 'bg-purple-700 text-purple-100' : 'bg-blue-700 text-blue-100'
                                     }`}>
                                         {admin.role === 'SuperAdmin' ? '超級管理員' : '管理員'}
-                                    </span>
-                                </td>
-                                <td className='px-6 py-4 whitespace-nowrap'>
-                                    <span className={`px-3 inline-flex rounded-full text-xs leading-5 font-semibold ${
-                                        admin.isActive ? 'bg-green-700 text-green-100' : 'bg-red-700 text-red-100'
-                                    }`}>
-                                        {admin.isActive ? '活躍' : '非活躍'}
                                     </span>
                                 </td>
                                 <td className='px-6 py-4 whitespace-nowrap'>
@@ -248,17 +239,6 @@ const AdminTable = () => {
                                 >
                                     <option value="Admin">管理員</option>
                                     <option value="SuperAdmin">超級管理員</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-1">狀態</label>
-                                <select
-                                    className="w-full px-3 py-2 bg-gray-700 text-white rounded-md"
-                                    value={formData.isActive}
-                                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'true' })}
-                                >
-                                    <option value={true}>活躍</option>
-                                    <option value={false}>非活躍</option>
                                 </select>
                             </div>
                         </div>

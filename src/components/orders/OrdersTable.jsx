@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Eye, Search, X } from 'lucide-react';
+import { ordersApi } from '../../core/api';
+import { toast } from 'react-toastify';
 
 const OrdersTable = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -14,13 +16,21 @@ const OrdersTable = () => {
 
     useEffect(() => {
         // 獲取訂單列表
-        fetch('/orders')
-            .then(res => res.json())
-            .then(data => {
-                setOrders(data.orders);
-                setFilteredOrders(data.orders);
-            })
-            .catch(err => console.error('獲取訂單列表失敗:', err));
+        const fetchOrders = async () => {
+            try {
+                const response = await ordersApi.getAll();
+                setOrders(response.orders);
+                setFilteredOrders(response.orders);
+            } catch (error) {
+                console.error('獲取訂單列表失敗:', error);
+                toast.error(error.response?.data?.message || '獲取訂單列表失敗');
+                if (error.response?.status === 401) {
+                    localStorage.clear();
+                    window.location.href = "/";
+                }
+            }
+        };
+        fetchOrders();
     }, []);
 
     // 處理搜尋

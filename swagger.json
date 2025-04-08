@@ -447,25 +447,30 @@
         "requestBody": {
           "required": true,
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
                   "title": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖標題"
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖描述"
                   },
                   "link": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖連結"
                   },
                   "order": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "顯示順序"
                   },
                   "image": {
                     "type": "string",
-                    "format": "binary"
+                    "format": "base64",
+                    "description": "Base64 格式的圖片"
                   }
                 }
               }
@@ -548,19 +553,29 @@
                 "type": "object",
                 "properties": {
                   "title": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖標題"
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖描述"
                   },
                   "link": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖連結"
                   },
                   "order": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "顯示順序"
                   },
                   "isActive": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "是否啟用"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "base64",
+                    "description": "Base64 格式的新圖片（可選）"
                   }
                 }
               }
@@ -613,6 +628,103 @@
           },
           "404": {
             "description": "輪播圖未找到"
+          }
+        }
+      }
+    },
+    "/carousel/presigned-url": {
+      "get": {
+        "tags": [
+          "Carousels"
+        ],
+        "summary": "獲取輪播圖上傳用的預簽名 URL",
+        "description": "生成用於直接上傳圖片到 S3 的預簽名 URL。\n注意：上傳時需要包含返回的 headers。\n",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "description": "文件類型，必須是 .jpg、.jpeg、.png 或 .gif",
+            "schema": {
+              "type": "string",
+              "enum": [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif"
+              ],
+              "example": ".jpg"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取預簽名 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string",
+                      "description": "用於上傳的預簽名 URL",
+                      "example": "https://s3.amazonaws.com/bucket/..."
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "上傳完成後的圖片訪問 URL",
+                      "example": "https://cdn.example.com/carousels/image.jpg"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "description": "上傳時需要的 headers",
+                      "properties": {
+                        "Content-Type": {
+                          "type": "string",
+                          "example": "image/jpeg"
+                        },
+                        "x-amz-acl": {
+                          "type": "string",
+                          "example": "public-read"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "不支持的文件類型",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "不支持的文件類型"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "生成預簽名 URL 失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "生成預簽名 URL 失敗"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3103,12 +3215,52 @@
         }
       }
     },
+    "/products/presigned-url": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "獲取產品圖片上傳用的預簽名 URL",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "description": "文件類型 (.jpg, .png, .gif)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取預簽名 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string"
+                    },
+                    "imageUrl": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/store-settings": {
       "get": {
         "tags": [
           "Store Settings"
         ],
         "summary": "讀取商店設置",
+        "description": "獲取商店的所有設置信息",
         "responses": {
           "200": {
             "description": "成功獲取商店設置",
@@ -3118,8 +3270,7 @@
                   "type": "object",
                   "properties": {
                     "settings": {
-                      "type": "object",
-                      "additionalProperties": true
+                      "$ref": "#/components/schemas/StoreSetting"
                     }
                   }
                 }
@@ -3127,10 +3278,35 @@
             }
           },
           "404": {
-            "description": "商店設置未找到"
+            "description": "商店設置未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "商店設置未找到"
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
-            "description": "伺服器錯誤"
+            "description": "伺服器錯誤",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -3179,22 +3355,124 @@
         }
       }
     },
+    "/store-settings/logo/presigned-url": {
+      "get": {
+        "tags": [
+          "Store Settings"
+        ],
+        "summary": "獲取商店 Logo 上傳用的預簽名 URL",
+        "description": "生成用於直接上傳圖片到 S3 的預簽名 URL。\n注意：上傳時需要包含返回的 headers。\n",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "description": "文件類型，必須是 .jpg、.jpeg、.png 或 .gif",
+            "schema": {
+              "type": "string",
+              "enum": [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif"
+              ],
+              "example": ".jpg"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取預簽名 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string",
+                      "description": "用於上傳的預簽名 URL",
+                      "example": "https://s3.amazonaws.com/bucket/..."
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "上傳完成後的圖片訪問 URL",
+                      "example": "https://cdn.example.com/logos/image.jpg"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "description": "上傳時需要的 headers",
+                      "properties": {
+                        "Content-Type": {
+                          "type": "string",
+                          "example": "image/jpeg"
+                        },
+                        "x-amz-acl": {
+                          "type": "string",
+                          "example": "public-read"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "不支持的文件類型",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "不支持的文件類型"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "生成預簽名 URL 失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "生成預簽名 URL 失敗"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/store-settings/logo": {
       "put": {
         "tags": [
           "Store Settings"
         ],
         "summary": "更新商店 Logo",
+        "description": "使用已上傳到 S3 的圖片 URL 更新商店 Logo",
         "requestBody": {
           "required": true,
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "imageUrl"
+                ],
                 "properties": {
-                  "logo": {
+                  "imageUrl": {
                     "type": "string",
-                    "format": "binary"
+                    "description": "已上傳到 S3 的圖片 URL",
+                    "example": "https://cdn.example.com/logos/image.jpg"
                   }
                 }
               }
@@ -3210,10 +3488,13 @@
                   "type": "object",
                   "properties": {
                     "message": {
-                      "type": "string"
+                      "type": "string",
+                      "example": "Logo updated successfully"
                     },
                     "logo": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "更新後的 Logo URL",
+                      "example": "https://cdn.example.com/logos/image.jpg"
                     }
                   }
                 }
@@ -3221,13 +3502,51 @@
             }
           },
           "400": {
-            "description": "未提供文件"
+            "description": "無效的圖片 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "無效的圖片 URL"
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "商店設置未找到"
+            "description": "商店設置未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "商店設置未找到"
+                    }
+                  }
+                }
+              }
+            }
           },
           "500": {
-            "description": "伺服器錯誤"
+            "description": "伺服器錯誤",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3260,25 +3579,32 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖 ID"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖標題"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖描述"
           },
           "imageUrl": {
-            "type": "string"
+            "type": "string",
+            "description": "圖片 URL"
           },
           "link": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖連結"
           },
           "order": {
-            "type": "number"
+            "type": "number",
+            "description": "顯示順序"
           },
           "isActive": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "是否啟用"
           }
         }
       },
@@ -3360,6 +3686,101 @@
             "type": "boolean"
           }
         }
+      },
+      "StoreSetting": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "商店名稱",
+            "default": "My Store"
+          },
+          "contact": {
+            "type": "object",
+            "properties": {
+              "phone": {
+                "type": "string",
+                "description": "聯繫電話",
+                "default": ""
+              },
+              "email": {
+                "type": "string",
+                "description": "聯繫郵箱",
+                "default": ""
+              }
+            }
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string",
+                "description": "國家",
+                "default": ""
+              },
+              "city": {
+                "type": "string",
+                "description": "城市",
+                "default": ""
+              },
+              "addressLine": {
+                "type": "string",
+                "description": "詳細地址",
+                "default": ""
+              }
+            }
+          },
+          "businessHours": {
+            "type": "string",
+            "description": "營業時間",
+            "default": "9:00 AM - 9:00 PM"
+          },
+          "appearance": {
+            "type": "object",
+            "properties": {
+              "logo": {
+                "type": "string",
+                "description": "商店 Logo URL",
+                "default": ""
+              },
+              "themeColor": {
+                "type": "string",
+                "description": "主色調",
+                "default": "#ffffff"
+              }
+            }
+          },
+          "socialLinks": {
+            "type": "object",
+            "properties": {
+              "facebook": {
+                "type": "string",
+                "description": "Facebook 連結",
+                "default": ""
+              },
+              "twitter": {
+                "type": "string",
+                "description": "Twitter 連結",
+                "default": ""
+              },
+              "instagram": {
+                "type": "string",
+                "description": "Instagram 連結",
+                "default": ""
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "創建時間"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新時間"
+          }
+        }
       }
     }
   },
@@ -3407,6 +3828,10 @@
     {
       "name": "Products",
       "description": "产品管理的 API"
+    },
+    {
+      "name": "Store Settings",
+      "description": "商店設置管理 API"
     }
   ]
 }

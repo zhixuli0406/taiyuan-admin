@@ -6,13 +6,12 @@ import ProductsPage from "./pages/ProductsPage";
 import UsersPage from "./pages/UsersPage";
 import OrdersPage from "./pages/OrdersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import SettingsPage from "./pages/SettingsPage";
 import SigninPage from "./pages/SigninPage";
 import CreateProduct from "./pages/CreateProductPage";
 import EditProduct from "./pages/EditProductPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import AdminPage from "./pages/Admin/AdminPage";
-
+import StoreSettings from "./pages/StoreSettings";
 const App = () => {
   return localStorage.getItem("token") ? (
     <div className="flex h-screen bg-gray-900 text-gray-100 overflow-hidden">
@@ -34,7 +33,7 @@ const App = () => {
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/admin" element={<AdminPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/settings" element={<StoreSettings />} />
       </Routes>
     </div>
   ) : (

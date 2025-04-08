@@ -23,11 +23,12 @@ const OrdersPage = () => {
         const fetchOverview = async () => {
             try {
                 const response = await analyticsApi.getOverview();
+                const data = response || {};
                 setOrderStats({
-                    totalOrders: response.totalOrders.toString(),
-                    pendingOrders: Math.floor(response.totalOrders * 0.15).toString(),
-                    completedOrders: (response.totalOrders - Math.floor(response.totalOrders * 0.15)).toString(),
-                    totalRevenue: `$${response.totalRevenue.toLocaleString()}`
+                    totalOrders: (data.totalOrders || 0).toString(),
+                    pendingOrders: Math.floor((data.totalOrders || 0) * 0.15).toString(),
+                    completedOrders: ((data.totalOrders || 0) - Math.floor((data.totalOrders || 0) * 0.15)).toString(),
+                    totalRevenue: `$${(data.totalRevenue || 0).toLocaleString()}`
                 });
             } catch (error) {
                 console.error('獲取概覽數據失敗:', error);

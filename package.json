@@ -33,6 +33,7 @@
     "react-sortable-tree-theme-minimal": "^0.0.14",
     "react-spinners": "^0.15.0",
     "react-switch": "^7.1.0",
+    "react-time-picker": "^7.0.0",
     "react-toastify": "^10.0.6",
     "react-virtualized-tree": "^3.4.1",
     "recharts": "^2.13.0"

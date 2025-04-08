@@ -24,6 +24,11 @@ const productsApi = {
   // 删除产品
   delete: (id) => {
     return apiClient.delete(`/products/${id}`);
+  },
+
+  // 获取预签名URL
+  getPresignedUrl: (fileType) => {
+    return apiClient.get('/products/presigned-url', { params: { fileType } });
   }
 };
 

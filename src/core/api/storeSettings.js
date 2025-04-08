@@ -81,7 +81,7 @@ const storeSettingsApi = {
     } catch (error) {
       console.error('更新 Logo 失败:', error);
       if (error.response) {
-        console.error('API 响应:', error.response.data);
+        console.error('API 响应:', error.response);
       }
       throw error;
     }

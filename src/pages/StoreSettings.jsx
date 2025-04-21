@@ -8,8 +8,31 @@ import AddressSettings from '../components/store_settings/AddressSettings';
 import SocialSettings from '../components/store_settings/SocialSettings';
 import CarouselSettings from '../components/store_settings/CarouselSettings.jsx';
 
+const initialStoreSettings = {
+  name: '',
+  contact: {
+    phone: '',
+    email: ''
+  },
+  address: {
+    street: '',
+    city: '',
+    postalCode: ''
+  },
+  social: {
+    facebook: '',
+    instagram: '',
+    line: ''
+  },
+  businessHours: '',
+  appearance: {
+    logo: '',
+    themeColor: '#ffffff'
+  }
+};
+
 const StoreSettings = () => {
-  const [storeSettings, setStoreSettings] = useState({});
+  const [storeSettings, setStoreSettings] = useState(initialStoreSettings);
   const [carousels, setCarousels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,8 +46,9 @@ const StoreSettings = () => {
     setError(null);
     try {
       await Promise.all([fetchStoreSettings(), fetchCarousels()]);
-    } catch {
+    } catch (err) {
       setError('獲取數據失敗，請稍後再試');
+      console.error('獲取數據失敗:', err);
     } finally {
       setLoading(false);
     }
@@ -33,20 +57,49 @@ const StoreSettings = () => {
   const fetchStoreSettings = async () => {
     try {
       const response = await storeSettingsApi.get();
-      setStoreSettings(response.settings || {});
-    } catch {
-      setError('獲取商店設定失敗');
-      throw new Error('獲取商店設定失敗');
+      console.log('API 响应:', response);
+      if (response) {
+        const updatedSettings = {
+          ...initialStoreSettings,
+          name: response.name || '',
+          contact: {
+            ...initialStoreSettings.contact,
+            ...response.contact
+          },
+          address: {
+            ...initialStoreSettings.address,
+            ...response.address
+          },
+          social: {
+            ...initialStoreSettings.social,
+            facebook: response.socialLinks?.facebook || '',
+            instagram: response.socialLinks?.instagram || '',
+            line: response.socialLinks?.line || ''
+          },
+          businessHours: response.businessHours || '',
+          appearance: {
+            ...initialStoreSettings.appearance,
+            ...response.appearance
+          }
+        };
+        console.log('更新后的设置:', updatedSettings);
+        setStoreSettings(updatedSettings);
+      }
+    } catch (err) {
+      console.error('獲取商店設定失敗:', err);
+      throw err;
     }
   };
 
   const fetchCarousels = async () => {
     try {
       const response = await carouselsApi.getAll();
-      setCarousels(response.carousels);
-    } catch {
-      setError('獲取輪播圖失敗');
-      throw new Error('獲取輪播圖失敗');
+      if (response && response.carousels) {
+        setCarousels(response.carousels);
+      }
+    } catch (err) {
+      console.error('獲取輪播圖失敗:', err);
+      throw err;
     }
   };
 
@@ -55,8 +108,9 @@ const StoreSettings = () => {
       await storeSettingsApi.update(updatedSettings);
       setStoreSettings(updatedSettings);
       setError(null);
-    } catch {
+    } catch (err) {
       setError('更新商店設定失敗');
+      console.error('更新商店設定失敗:', err);
     }
   };
 
@@ -99,30 +153,29 @@ const StoreSettings = () => {
           </div>
         )}
 
-        <BasicSettings
-          settings={storeSettings}
-          onUpdate={handleStoreSettingsUpdate}
-          onLogoUpload={handleLogoUpload}
+        <BasicSettings 
+          settings={storeSettings} 
+          onUpdate={handleStoreSettingsUpdate} 
         />
-
-        <ContactSettings
-          settings={storeSettings}
-          onUpdate={handleStoreSettingsUpdate}
+        
+        <ContactSettings 
+          settings={storeSettings} 
+          onUpdate={handleStoreSettingsUpdate} 
         />
-
-        <AddressSettings
-          settings={storeSettings}
-          onUpdate={handleStoreSettingsUpdate}
+        
+        <AddressSettings 
+          settings={storeSettings} 
+          onUpdate={handleStoreSettingsUpdate} 
         />
-
-        <SocialSettings
-          settings={storeSettings}
-          onUpdate={handleStoreSettingsUpdate}
+        
+        <SocialSettings 
+          settings={storeSettings} 
+          onUpdate={handleStoreSettingsUpdate} 
         />
-
-        <CarouselSettings
-          carousels={carousels}
-          onUpdate={fetchCarousels}
+        
+        <CarouselSettings 
+          carousels={carousels} 
+          onUpdate={fetchCarousels} 
         />
       </main>
     </div>

@@ -1,17 +1,21 @@
 import { Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Sidebar from "./components/common_components/Sidebar";
 import OverviewPage from "./pages/OverviewPage";
 import ProductsPage from "./pages/ProductsPage";
 import UsersPage from "./pages/UsersPage";
 import OrdersPage from "./pages/OrdersPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
 import SigninPage from "./pages/SigninPage";
 import CreateProduct from "./pages/CreateProductPage";
 import EditProduct from "./pages/EditProductPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import AdminPage from "./pages/Admin/AdminPage";
 import StoreSettings from "./pages/StoreSettings";
+import ImagesPage from "./pages/ImagesPage";
+import TransportManagement from "./pages/TransportManagement";
+
 const App = () => {
   return localStorage.getItem("token") ? (
     <div className="flex h-screen bg-gray-900 text-gray-100 overflow-hidden">
@@ -31,10 +35,12 @@ const App = () => {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/settings" element={<StoreSettings />} />
+        <Route path="/images" element={<ImagesPage />} />
+        <Route path="/transport" element={<TransportManagement />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   ) : (
     <Routes>

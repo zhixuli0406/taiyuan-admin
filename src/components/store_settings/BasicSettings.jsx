@@ -17,17 +17,21 @@ const BasicSettings = ({ settings = {}, onUpdate }) => {
   const [logo, setLogo] = useState(null);
 
   useEffect(() => {
+    console.log('BasicSettings 收到的设置:', settings);
     if (settings?.businessHours) {
       // 解析 businessHours 字符串，例如 "9:00 AM - 6:00 PM"
       const [startTime, endTime] = settings.businessHours.split(' - ');
-      setFormData({
+      const updatedFormData = {
         ...settings,
         businessHours: {
           start: parseAMPMTo24Hour(startTime),
           end: parseAMPMTo24Hour(endTime)
         }
-      });
+      };
+      console.log('更新后的表单数据:', updatedFormData);
+      setFormData(updatedFormData);
     } else {
+      console.log('使用默认设置:', settings);
       setFormData(settings);
     }
   }, [settings]);
@@ -98,6 +102,23 @@ const BasicSettings = ({ settings = {}, onUpdate }) => {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             placeholder="請輸入商店名稱"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-1">
+            商店描述
+          </label>
+          <textarea
+            id="description"
+            value={formData.description || ''}
+            onChange={(e) => setFormData({
+              ...formData,
+              description: e.target.value
+            })}
+            rows={4}
+            className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+            placeholder="請輸入商店描述"
           />
         </div>
 
@@ -201,6 +222,7 @@ const BasicSettings = ({ settings = {}, onUpdate }) => {
 BasicSettings.propTypes = {
   settings: PropTypes.shape({
     name: PropTypes.string,
+    description: PropTypes.string,
     businessHours: PropTypes.string,
     appearance: PropTypes.shape({
       logo: PropTypes.string,

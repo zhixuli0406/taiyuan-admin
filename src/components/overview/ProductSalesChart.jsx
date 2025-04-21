@@ -20,25 +20,21 @@ ChartJS.register(
   Legend
 );
 
-const CategoryDistributionChart = ({ topProducts }) => {
-  if (!topProducts) return null;
+const ProductSalesChart = ({ productData }) => {
+  if (!productData) return null;
 
   const chartData = {
-    labels: topProducts.map(item => item._id),
+    labels: productData.map(item => item.productName),
     datasets: [
       {
-        label: "Total Quantity Sold",
-        data: topProducts.map(item => item.totalQuantity),
-        backgroundColor: "rgba(99, 102, 241, 0.5)",
-        borderColor: "rgb(99, 102, 241)",
-        borderWidth: 1,
+        label: "銷售數量",
+        data: productData.map(item => item.quantity),
+        backgroundColor: "rgba(99, 102, 241, 0.8)",
       },
       {
-        label: "Total Revenue",
-        data: topProducts.map(item => item.totalRevenue),
-        backgroundColor: "rgba(139, 92, 246, 0.5)",
-        borderColor: "rgb(139, 92, 246)",
-        borderWidth: 1,
+        label: "銷售金額",
+        data: productData.map(item => item.revenue),
+        backgroundColor: "rgba(139, 92, 246, 0.8)",
       },
     ],
   };
@@ -54,7 +50,7 @@ const CategoryDistributionChart = ({ topProducts }) => {
       },
       title: {
         display: true,
-        text: "Top Products Performance",
+        text: "產品銷售排行",
         color: "white",
       },
     },
@@ -85,14 +81,14 @@ const CategoryDistributionChart = ({ topProducts }) => {
   );
 };
 
-CategoryDistributionChart.propTypes = {
-  topProducts: PropTypes.arrayOf(
+ProductSalesChart.propTypes = {
+  productData: PropTypes.arrayOf(
     PropTypes.shape({
-      _id: PropTypes.string.isRequired,
-      totalQuantity: PropTypes.number.isRequired,
-      totalRevenue: PropTypes.number.isRequired,
+      productName: PropTypes.string.isRequired,
+      quantity: PropTypes.number.isRequired,
+      revenue: PropTypes.number.isRequired,
     })
   ),
 };
 
-export default CategoryDistributionChart;
+export default ProductSalesChart; 

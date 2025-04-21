@@ -9,6 +9,7 @@ import {
     ImagePreview,
 } from "@dropzone-ui/react";
 import { productsApi, categoriesApi } from "../core/api";
+import transportApi from "../core/api/transport";
 import CreatableSelect from "react-select/creatable";
 import ToogleSwitch from "../components/settings/ToogleSwitch";
 import "react-quill/dist/quill.snow.css";
@@ -23,11 +24,7 @@ const CreateProduct = () => {
     const [imageSrc, setImageSrc] = useState(undefined);
     const [category, setCategory] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState([]);
-    const [transport, ] = useState([
-        { value: '7-11', label: '7-11' },
-        { value: '全家', label: '全家' },
-        { value: '宅配', label: '宅配' }
-    ]);
+    const [transport, setTransport] = useState([]);
     const [selectedTransport, setSelectedTransport] = useState([]);
     const [isCustomizable, setIsCustomizable] = useState(false);
     const [price, setPrice] = useState(0);
@@ -170,6 +167,25 @@ const CreateProduct = () => {
         }
     };
 
+    const getTransportList = async () => {
+        try {
+            const response = await transportApi.getAll();
+            const transportList = response.transports
+                .filter(t => t.isActive) // 只获取启用的运输方式
+                .map(t => ({
+                    value: t._id,
+                    label: `${t.name} ($${t.fee})`,
+                    fee: t.fee,
+                    description: t.description,
+                    estimatedDays: t.estimatedDays
+                }));
+            setTransport(transportList);
+        } catch (error) {
+            console.error('获取运输方式列表失败:', error);
+            toast.error(error.response?.data?.message || '获取运输方式列表失败');
+        }
+    };
+
     const handleOnCreate = async (inputValue) => {
         try {
             const response = await productsApi.createCategory({
@@ -195,10 +211,7 @@ const CreateProduct = () => {
         }
         
         setLoading(true);
-        let transportList = [];
-        for (let t of selectedTransport) {
-            transportList.push(t.value);
-        }
+        let transportList = selectedTransport.map(t => t.value);
         try {
             await productsApi.create({
                 name: productName,
@@ -228,6 +241,7 @@ const CreateProduct = () => {
 
     useEffect(() => {
         getCategoryList();
+        getTransportList();
     }, []);
 
     return (
@@ -348,9 +362,11 @@ const CreateProduct = () => {
                         <div className="flex flex-col space-y-1 mb-4">
                             <label className="text-sm text-gray-300">運送方式</label>
                             <CreatableSelect
-                                isClearable
                                 isMulti
+                                isClearable={false}
+                                isCreatable={false}
                                 options={transport}
+                                value={selectedTransport}
                                 onChange={(selectedOptions) => setSelectedTransport(selectedOptions)}
                                 styles={{
                                     control: (baseStyles) => ({
@@ -362,7 +378,11 @@ const CreateProduct = () => {
                                         ...baseStyles,
                                         color: "rgb(255 255 255 / var(--tw-text-opacity, 1))",
                                     }),
-                                    singleValue: (baseStyles) => ({
+                                    multiValue: (baseStyles) => ({
+                                        ...baseStyles,
+                                        backgroundColor: "rgb(31 41 55)",
+                                    }),
+                                    multiValueLabel: (baseStyles) => ({
                                         ...baseStyles,
                                         color: "rgb(255 255 255 / var(--tw-text-opacity, 1))",
                                     }),
@@ -375,9 +395,24 @@ const CreateProduct = () => {
                                         backgroundColor: state.isFocused
                                             ? "#111827"
                                             : "rgb(55 65 81)",
+                                        color: "rgb(255 255 255 / var(--tw-text-opacity, 1))",
                                     }),
                                 }}
+                                noOptionsMessage={() => "無可用的運送方式"}
+                                placeholder="選擇運送方式..."
                             />
+                            {selectedTransport.length > 0 && (
+                                <div className="mt-2 space-y-2">
+                                    {selectedTransport.map((t) => (
+                                        <div key={t.value} className="text-sm text-gray-400">
+                                            <div>{t.description}</div>
+                                            {t.estimatedDays && (
+                                                <div>預計 {t.estimatedDays} 天送達</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                         <div className="flex flex-col space-y-1 mb-4">
                             <ToogleSwitch

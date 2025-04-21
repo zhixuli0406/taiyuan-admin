@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import analyticsApi from '../../core/api/analytics';
 
 const COLORS = ["#ff6b6b", "#4ecdc4", "#45b7d1", "#fed766"];
 
@@ -9,9 +10,17 @@ const StatusDistributionChart = () => {
 
   useEffect(() => {
     // 獲取訂單狀態統計
-    fetch('/analytics/status')
-      .then(res => res.json())
-      .then(data => {
+    analyticsApi.getStatusDistribution()
+      .then(response => {
+        console.log('Raw status data:', response);
+        
+        // 檢查數據是否存在且是數組
+        if (!response || !Array.isArray(response)) {
+          console.error('獲取的數據格式不正確:', response);
+          setStatusData([]);
+          return;
+        }
+        
         // 將狀態翻譯為中文
         const statusMap = {
           'Pending': '待處理',
@@ -20,13 +29,17 @@ const StatusDistributionChart = () => {
           'Delivered': '已送達'
         };
         
-        const formattedData = data.map(item => ({
+        const formattedData = response.map(item => ({
           name: statusMap[item._id] || item._id,
           value: item.count
         }));
+        console.log('Formatted status data:', formattedData);
         setStatusData(formattedData);
       })
-      .catch(err => console.error('獲取狀態統計失敗:', err));
+      .catch(err => {
+        console.error('獲取狀態統計失敗:', err);
+        setStatusData([]);
+      });
   }, []);
 
   return (

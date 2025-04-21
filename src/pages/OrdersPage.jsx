@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 import Header from '../components/common_components/Header'
 import StatCards from '../components/common_components/StatCards';
-import { analyticsApi } from '../core/api';
+import ordersApi from '../core/api/orders';
 
 import DailyOrdersChart from "../components/orders/DailyOrdersChart"
 import StatusDistributionChart from '../components/orders/StatusDistributionChart'
@@ -20,19 +20,20 @@ const OrdersPage = () => {
     });
 
     useEffect(() => {
-        const fetchOverview = async () => {
+        const fetchOrders = async () => {
             try {
-                const response = await analyticsApi.getOverview();
-                const data = response || {};
+                const response = await ordersApi.getAll();
+                const { statistics } = response;
+                
                 setOrderStats({
-                    totalOrders: (data.totalOrders || 0).toString(),
-                    pendingOrders: Math.floor((data.totalOrders || 0) * 0.15).toString(),
-                    completedOrders: ((data.totalOrders || 0) - Math.floor((data.totalOrders || 0) * 0.15)).toString(),
-                    totalRevenue: `$${(data.totalRevenue || 0).toLocaleString()}`
+                    totalOrders: (statistics.totalOrders || 0).toString(),
+                    pendingOrders: (statistics.pendingOrders || 0).toString(),
+                    completedOrders: (statistics.completedOrders || 0).toString(),
+                    totalRevenue: `$${(statistics.totalRevenue || 0).toLocaleString()}`
                 });
             } catch (error) {
-                console.error('獲取概覽數據失敗:', error);
-                toast.error(error.response?.data?.message || '獲取概覽數據失敗');
+                console.error('獲取訂單數據失敗:', error);
+                toast.error(error.response?.data?.message || '獲取訂單數據失敗');
                 if (error.response?.status === 401) {
                     localStorage.clear();
                     window.location.href = "/";
@@ -40,7 +41,7 @@ const OrdersPage = () => {
             }
         };
 
-        fetchOverview();
+        fetchOrders();
     }, []);
 
     return (

@@ -2,7 +2,14 @@ import apiClient from './apiClient';
 
 const adminApi = {
   login: (email, password) => {
-    return apiClient.post('/admin/login', { email, password });
+    return apiClient.post('/admin/login', {
+      email: email,
+      password: password
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   },
 
   create: (adminData) => {

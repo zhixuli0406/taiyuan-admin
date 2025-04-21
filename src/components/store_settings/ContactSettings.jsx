@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
-const ContactSettings = ({ settings, onUpdate }) => {
-  const [formData, setFormData] = useState(settings);
+const ContactSettings = ({ settings = {}, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    contact: {
+      phone: '',
+      email: ''
+    }
+  });
 
   useEffect(() => {
-    setFormData(settings);
+    if (settings) {
+      setFormData({
+        ...settings,
+        contact: {
+          phone: settings.contact?.phone || '',
+          email: settings.contact?.email || ''
+        }
+      });
+    }
   }, [settings]);
 
   const handleSubmit = (e) => {
@@ -67,6 +81,16 @@ const ContactSettings = ({ settings, onUpdate }) => {
       </form>
     </div>
   );
+};
+
+ContactSettings.propTypes = {
+  settings: PropTypes.shape({
+    contact: PropTypes.shape({
+      phone: PropTypes.string,
+      email: PropTypes.string
+    })
+  }),
+  onUpdate: PropTypes.func.isRequired
 };
 
 export default ContactSettings; 

@@ -1,62 +1,100 @@
-import React from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { motion } from 'framer-motion'
+import React from "react";
+import PropTypes from "prop-types";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
-const Sales_Data = [
-    { name: "Aug", Sales: 3000 },
-    { name: "Sep", Sales: 3700 },
-    { name: "Oct", Sales: 5200 },
-    { name: "Nov", Sales: 4600 },
-    { name: "Dec", Sales: 5400 },
-    { name: "Jan", Sales: 7300 },
-    { name: "Feb", Sales: 6100 },
-    { name: "Mar", Sales: 5600 },
-    { name: "Apr", Sales: 6600 },
-    { name: "May", Sales: 6200 },
-    { name: "Jun", Sales: 7100 },
-    { name: "Jul", Sales: 7700 },
-    
-]
+const SaleOverviewChart = ({ salesData }) => {
+  if (!salesData) return null;
 
-const SaleOverviewChart = () => {
-    return (
-        <motion.div
-            className='bg-gray-800 bg-opacity-50 shadow-lg backdrop-blur-md rounded-xl p-5 border border-gray-700'
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-        >
-            <h2 className='text-lg font-medium mb-4 text-gray-100'>
-                Sales Overview
-            </h2>
+  const chartData = {
+    labels: salesData.map(item => new Date(item._id).toLocaleDateString()),
+    datasets: [
+      {
+        label: "每日收入",
+        data: salesData.map(item => item.dailyRevenue),
+        borderColor: "rgb(99, 102, 241)",
+        backgroundColor: "rgba(99, 102, 241, 0.5)",
+        tension: 0.4,
+      },
+      {
+        label: "每日訂單數",
+        data: salesData.map(item => item.dailyOrders),
+        borderColor: "rgb(139, 92, 246)",
+        backgroundColor: "rgba(139, 92, 246, 0.5)",
+        tension: 0.4,
+      },
+    ],
+  };
 
-            <div className='h-80'>
-                <ResponsiveContainer width={"100%"} height={"100%"}>
-                    <LineChart data={Sales_Data}>
-                        <CartesianGrid strokeDasharray={'3 3'} stroke='#4b5563' />
-                        <XAxis dataKey={"name"} stroke='#9ca3af' />
-                        <YAxis stroke='#9ca3af' />
-                        <Tooltip
-                            contentStyle={{
-                                backgroundColor: "rgba(31, 45, 55, 0.8)",
-                                borderColor: "#4b5563"
-                            }}
-                            itemStyle={{ color: "#e5e7eb" }}
-                        />
-                            <Line
-                                type="monotone"
-                                dataKey='Sales'
-                                stroke='#6366f1'
-                                strokeWidth={3}
-                                dot={{ fill: '#6366f1', strokeWidth: 2, r: 5 }}
-                                activeDot= {{r: 8, strokeWidth: 2}}
-                            />
-                    </LineChart>
-                </ResponsiveContainer>
-            </div>
-        </motion.div>
-    )
-}
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          color: "white",
+        },
+      },
+      title: {
+        display: true,
+        text: "銷售概覽",
+        color: "white",
+      },
+    },
+    scales: {
+      y: {
+        ticks: {
+          color: "white",
+        },
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+      },
+      x: {
+        ticks: {
+          color: "white",
+        },
+        grid: {
+          color: "rgba(255, 255, 255, 0.1)",
+        },
+      },
+    },
+  };
 
-export default SaleOverviewChart
+  return (
+    <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+      <Line data={chartData} options={options} />
+    </div>
+  );
+};
+
+SaleOverviewChart.propTypes = {
+  salesData: PropTypes.arrayOf(
+    PropTypes.shape({
+      _id: PropTypes.string.isRequired,
+      dailyRevenue: PropTypes.number.isRequired,
+      dailyOrders: PropTypes.number.isRequired,
+    })
+  ),
+};
+
+export default SaleOverviewChart;

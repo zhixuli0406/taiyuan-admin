@@ -22,13 +22,25 @@ const SigninPage = () => {
     }
     try {
       const response = await adminApi.login(email, password);
+      console.log('登入響應:', response);
       if (response.token) {
-        window.location.href = "/";
         localStorage.setItem("token", response.token);
+        window.location.href = "/";
+      } else {
+        toast.error("登入失敗：未收到令牌");
       }
     } catch (error) {
-      console.log(error);
-      toast.error(error.response?.data?.error || "登入失敗");
+      console.error('登入錯誤:', error);
+      if (error.response) {
+        const { status, data } = error.response;
+        if (status === 401) {
+          toast.error(data.message || "帳號或密碼錯誤");
+        } else {
+          toast.error(data.message || "登入失敗");
+        }
+      } else {
+        toast.error("登入失敗，請檢查網路連接");
+      }
     }
   };
 

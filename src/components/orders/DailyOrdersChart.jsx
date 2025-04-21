@@ -1,23 +1,38 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import analyticsApi from '../../core/api/analytics';
 
 const DailyOrdersChart = () => {
     const [ordersData, setOrdersData] = useState([]);
 
     useEffect(() => {
-        // 獲取銷售數據
-        fetch('/analytics/sales')
-            .then(res => res.json())
-            .then(data => {
+        const fetchData = async () => {
+            try {
+                const response = await analyticsApi.getSales();
+                console.log('Raw sales data:', response);
+                
+                // 檢查數據是否存在且是數組
+                if (!response || !Array.isArray(response)) {
+                    console.error('獲取的數據格式不正確:', response);
+                    setOrdersData([]);
+                    return;
+                }
+                
                 // 格式化數據
-                const formattedData = data.map(item => ({
+                const formattedData = response.map(item => ({
                     date: new Date(item._id).toLocaleDateString('zh-TW'),
                     訂單數: item.dailyOrders
                 }));
+                console.log('Formatted data:', formattedData);
                 setOrdersData(formattedData);
-            })
-            .catch(err => console.error('獲取銷售數據失敗:', err));
+            } catch (err) {
+                console.error('獲取銷售數據失敗:', err);
+                setOrdersData([]);
+            }
+        };
+
+        fetchData();
     }, []);
 
     return (

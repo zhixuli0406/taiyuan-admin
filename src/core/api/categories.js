@@ -24,6 +24,19 @@ const categoriesApi = {
   // 删除分类
   delete: (id) => {
     return apiClient.delete(`/categories/${id}`);
+  },
+
+  // 批量更新分类顺序和父级关系
+  updateOrder: (orderData) => {
+    // 使用 Promise.all 并行处理所有更新请求
+    return Promise.all(
+      orderData.map(({ id, order, parentCategory }) => 
+        apiClient.put(`/categories/${id}`, { 
+          order,
+          parentCategory 
+        })
+      )
+    );
   }
 };
 

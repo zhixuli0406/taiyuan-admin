@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
-const AddressSettings = ({ settings, onUpdate }) => {
-  const [formData, setFormData] = useState(settings);
+const AddressSettings = ({ settings = {}, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    address: {
+      street: '',
+      city: '',
+      postalCode: ''
+    }
+  });
 
   useEffect(() => {
-    setFormData(settings);
+    if (settings) {
+      setFormData({
+        ...settings,
+        address: {
+          street: settings.address?.street || '',
+          city: settings.address?.city || '',
+          postalCode: settings.address?.postalCode || ''
+        }
+      });
+    }
   }, [settings]);
 
   const handleSubmit = (e) => {
@@ -14,25 +30,25 @@ const AddressSettings = ({ settings, onUpdate }) => {
 
   return (
     <div className="bg-gray-800 shadow rounded-lg p-6 mb-6">
-      <h2 className="text-lg font-medium text-white mb-6">地址</h2>
+      <h2 className="text-lg font-medium text-white mb-6">地址資訊</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="country" className="block text-sm font-medium text-gray-300 mb-1">
-            國家
+          <label htmlFor="address" className="block text-sm font-medium text-gray-300 mb-1">
+            地址
           </label>
           <input
             type="text"
-            id="country"
-            value={formData.address?.country || ''}
+            id="address"
+            value={formData.address?.street || ''}
             onChange={(e) => setFormData({
               ...formData,
               address: {
                 ...formData.address,
-                country: e.target.value
+                street: e.target.value
               }
             })}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-            placeholder="請輸入國家"
+            placeholder="請輸入地址"
           />
         </div>
 
@@ -57,22 +73,22 @@ const AddressSettings = ({ settings, onUpdate }) => {
         </div>
 
         <div>
-          <label htmlFor="addressLine" className="block text-sm font-medium text-gray-300 mb-1">
-            詳細地址
+          <label htmlFor="postalCode" className="block text-sm font-medium text-gray-300 mb-1">
+            郵遞區號
           </label>
           <input
             type="text"
-            id="addressLine"
-            value={formData.address?.addressLine || ''}
+            id="postalCode"
+            value={formData.address?.postalCode || ''}
             onChange={(e) => setFormData({
               ...formData,
               address: {
                 ...formData.address,
-                addressLine: e.target.value
+                postalCode: e.target.value
               }
             })}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-            placeholder="請輸入詳細地址"
+            placeholder="請輸入郵遞區號"
           />
         </div>
 
@@ -87,6 +103,17 @@ const AddressSettings = ({ settings, onUpdate }) => {
       </form>
     </div>
   );
+};
+
+AddressSettings.propTypes = {
+  settings: PropTypes.shape({
+    address: PropTypes.shape({
+      street: PropTypes.string,
+      city: PropTypes.string,
+      postalCode: PropTypes.string
+    })
+  }),
+  onUpdate: PropTypes.func.isRequired
 };
 
 export default AddressSettings; 

@@ -9,6 +9,7 @@ import inventoryApi from './inventory';
 import storeSettingsApi from './storeSettings';
 import customersApi from './customers';
 import analyticsApi from './analytics';
+import transportApi from './transport';
 
 export {
   adminApi,
@@ -21,5 +22,6 @@ export {
   inventoryApi,
   storeSettingsApi,
   customersApi,
-  analyticsApi
+  analyticsApi,
+  transportApi
 }; 

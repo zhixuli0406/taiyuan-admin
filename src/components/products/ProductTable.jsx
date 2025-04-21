@@ -8,7 +8,6 @@ import {
   ChevronRight,
   Plus,
 } from "lucide-react";
-import parse from 'html-react-parser';
 import { productsApi } from "../../core/api";
 import { toast } from "react-toastify";
 import { PacmanLoader } from "react-spinners";
@@ -79,8 +78,14 @@ const ProductTable = () => {
   };
 
   const handleHtmlParse = (html) => {
-    const reactElement = parse(html);
-    return reactElement;
+    // 先移除 HTML 標籤
+    const textContent = html.replace(/<[^>]*>/g, '');
+    // 限制字數並添加省略號
+    const maxLength = 50;
+    const truncatedText = textContent.length > maxLength 
+      ? textContent.substring(0, maxLength) + '...'
+      : textContent;
+    return truncatedText;
   }
 
   useEffect(() => {
@@ -167,7 +172,7 @@ const ProductTable = () => {
                       />
                       {product.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
+                    <td className="px-6 py-4 text-sm text-gray-100 max-w-xs truncate whitespace-nowrap">
                       {handleHtmlParse(product.description)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
@@ -180,7 +185,9 @@ const ProductTable = () => {
                       {product.stock}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-100">
-                      {product.transport.toString()}
+                      {product.transport && product.transport.length > 0 
+                        ? product.transport.map(t => `${t.name} ($${t.fee})`).join(', ')
+                        : '未設定'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium h-full">
                       <div className="flex items-center gap-4 h-full">

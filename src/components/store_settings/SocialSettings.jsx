@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 
-const SocialSettings = ({ settings, onUpdate }) => {
-  const [formData, setFormData] = useState(settings);
+const SocialSettings = ({ settings = {}, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    social: {
+      facebook: '',
+      instagram: '',
+      line: ''
+    }
+  });
 
   useEffect(() => {
-    setFormData(settings);
+    if (settings) {
+      setFormData({
+        ...settings,
+        social: {
+          facebook: settings.social?.facebook || '',
+          instagram: settings.social?.instagram || '',
+          line: settings.social?.line || ''
+        }
+      });
+    }
   }, [settings]);
 
   const handleSubmit = (e) => {
@@ -14,20 +30,20 @@ const SocialSettings = ({ settings, onUpdate }) => {
 
   return (
     <div className="bg-gray-800 shadow rounded-lg p-6 mb-6">
-      <h2 className="text-lg font-medium text-white mb-6">社群連結</h2>
+      <h2 className="text-lg font-medium text-white mb-6">社群媒體</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="facebook" className="block text-sm font-medium text-gray-300 mb-1">
             Facebook
           </label>
           <input
-            type="url"
+            type="text"
             id="facebook"
-            value={formData.socialLinks?.facebook || ''}
+            value={formData.social?.facebook || ''}
             onChange={(e) => setFormData({
               ...formData,
-              socialLinks: {
-                ...formData.socialLinks,
+              social: {
+                ...formData.social,
                 facebook: e.target.value
               }
             })}
@@ -37,42 +53,42 @@ const SocialSettings = ({ settings, onUpdate }) => {
         </div>
 
         <div>
-          <label htmlFor="twitter" className="block text-sm font-medium text-gray-300 mb-1">
-            Twitter
-          </label>
-          <input
-            type="url"
-            id="twitter"
-            value={formData.socialLinks?.twitter || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              socialLinks: {
-                ...formData.socialLinks,
-                twitter: e.target.value
-              }
-            })}
-            className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-            placeholder="請輸入 Twitter 連結"
-          />
-        </div>
-
-        <div>
           <label htmlFor="instagram" className="block text-sm font-medium text-gray-300 mb-1">
             Instagram
           </label>
           <input
-            type="url"
+            type="text"
             id="instagram"
-            value={formData.socialLinks?.instagram || ''}
+            value={formData.social?.instagram || ''}
             onChange={(e) => setFormData({
               ...formData,
-              socialLinks: {
-                ...formData.socialLinks,
+              social: {
+                ...formData.social,
                 instagram: e.target.value
               }
             })}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             placeholder="請輸入 Instagram 連結"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="line" className="block text-sm font-medium text-gray-300 mb-1">
+            Line
+          </label>
+          <input
+            type="text"
+            id="line"
+            value={formData.social?.line || ''}
+            onChange={(e) => setFormData({
+              ...formData,
+              social: {
+                ...formData.social,
+                line: e.target.value
+              }
+            })}
+            className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+            placeholder="請輸入 Line ID"
           />
         </div>
 
@@ -87,6 +103,17 @@ const SocialSettings = ({ settings, onUpdate }) => {
       </form>
     </div>
   );
+};
+
+SocialSettings.propTypes = {
+  settings: PropTypes.shape({
+    social: PropTypes.shape({
+      facebook: PropTypes.string,
+      instagram: PropTypes.string,
+      line: PropTypes.string
+    })
+  }),
+  onUpdate: PropTypes.func.isRequired
 };
 
 export default SocialSettings; 

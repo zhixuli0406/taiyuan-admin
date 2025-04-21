@@ -1258,21 +1258,21 @@
                 "type": "object",
                 "required": [
                   "code",
-                  "discountType",
-                  "discountValue"
+                  "type",
+                  "value"
                 ],
                 "properties": {
                   "code": {
                     "type": "string"
                   },
-                  "discountType": {
+                  "type": {
                     "type": "string",
                     "enum": [
-                      "percentage",
-                      "fixed"
+                      "fixed",
+                      "percentage"
                     ]
                   },
-                  "discountValue": {
+                  "value": {
                     "type": "number"
                   },
                   "minPurchase": {
@@ -1294,6 +1294,18 @@
                   },
                   "isActive": {
                     "type": "boolean"
+                  },
+                  "applicableToProducts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "applicableToCategories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -1320,7 +1332,19 @@
             }
           },
           "400": {
-            "description": "請求參數錯誤"
+            "description": "請求參數錯誤",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -1387,8 +1411,8 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "isValid": {
-                      "type": "boolean"
+                    "message": {
+                      "type": "string"
                     },
                     "discount": {
                       "type": "number"
@@ -1402,10 +1426,34 @@
             }
           },
           "400": {
-            "description": "折價券無效或不適用"
+            "description": "折價券無效或不適用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "折價券未找到"
+            "description": "折價券未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1416,6 +1464,11 @@
           "Coupons"
         ],
         "summary": "刪除折價券",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -1429,10 +1482,34 @@
         ],
         "responses": {
           "200": {
-            "description": "折價券刪除成功"
+            "description": "折價券刪除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           },
           "404": {
-            "description": "折價券未找到"
+            "description": "折價券未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1443,6 +1520,11 @@
           "Coupons"
         ],
         "summary": "禁用折價券",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "id",
@@ -1474,7 +1556,19 @@
             }
           },
           "404": {
-            "description": "折價券未找到"
+            "description": "折價券未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -4172,14 +4266,14 @@
           "code": {
             "type": "string"
           },
-          "discountType": {
+          "type": {
             "type": "string",
             "enum": [
-              "percentage",
-              "fixed"
+              "fixed",
+              "percentage"
             ]
           },
-          "discountValue": {
+          "value": {
             "type": "number"
           },
           "minPurchase": {
@@ -4199,11 +4293,23 @@
           "usageLimit": {
             "type": "number"
           },
-          "usageCount": {
+          "usedCount": {
             "type": "number"
           },
           "isActive": {
             "type": "boolean"
+          },
+          "applicableToProducts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "applicableToCategories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "createdAt": {
             "type": "string",

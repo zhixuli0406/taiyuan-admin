@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import couponsApi from "../../core/api/coupons";
@@ -14,8 +14,19 @@ const CreateCoupon = () => {
     usageLimit: "",
     startDate: "",
     endDate: "",
-    isActive: true
+    isActive: true,
+    applicableProducts: [],
+    applicableCategories: []
   });
+
+  useEffect(() => {
+    // 檢查用戶是否已登入
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('請先登入');
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,12 +39,31 @@ const CreateCoupon = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await couponsApi.createCoupon(formData);
+      // 檢查 token 是否存在
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('請先登入');
+        navigate('/login');
+        return;
+      }
+
+      // 轉換日期格式為 ISO 字符串
+      const formattedData = {
+        ...formData,
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString()
+      };
+      
+      await couponsApi.createCoupon(formattedData);
       toast.success("優惠券創建成功");
       navigate("/coupons");
     } catch (error) {
       console.error("Error creating coupon:", error);
-      toast.error("創建優惠券失敗");
+      if (error.response?.status === 403) {
+        toast.error("權限不足，請確認您的帳號是否有足夠的權限");
+      } else {
+        toast.error("創建優惠券失敗");
+      }
     }
   };
 
@@ -137,6 +167,7 @@ const CreateCoupon = () => {
               name="startDate"
               value={formData.startDate}
               onChange={handleChange}
+              required
               className="w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500"
             />
           </div>
@@ -150,6 +181,7 @@ const CreateCoupon = () => {
               name="endDate"
               value={formData.endDate}
               onChange={handleChange}
+              required
               className="w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500"
             />
           </div>

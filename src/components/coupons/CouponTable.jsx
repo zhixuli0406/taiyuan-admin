@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getCoupons, createCoupon, updateCoupon, deleteCoupon, disableCoupon } from "../../core/api/coupons";
+import couponsApi from "../../core/api/coupons";
 
 const CouponTable = () => {
   const [coupons, setCoupons] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEnabled, setFilterEnabled] = useState("all");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     fetchCoupons();
@@ -15,7 +14,7 @@ const CouponTable = () => {
 
   const fetchCoupons = async () => {
     try {
-      const res = await getCoupons();
+      const res = await couponsApi.getCoupons();
       setCoupons(res.coupons);
     } catch (error) {
       console.error("Error fetching coupons:", error);
@@ -26,7 +25,7 @@ const CouponTable = () => {
   const handleDelete = async (id) => {
     if (window.confirm("確定要刪除此優惠券嗎？")) {
       try {
-        await deleteCoupon(id);
+        await couponsApi.deleteCoupon(id);
         toast.success("刪除成功");
         setCoupons(coupons.filter((coupon) => coupon._id !== id));
       } catch (error) {
@@ -38,7 +37,7 @@ const CouponTable = () => {
 
   const handleDisableCoupon = async (id) => {
     try {
-      await disableCoupon(id);
+      await couponsApi.disableCoupon(id);
       fetchCoupons();
     } catch (error) {
       console.error("Error disabling coupon:", error);

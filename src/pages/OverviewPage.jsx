@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/common_components/Header";
 import StatCards from "../components/common_components/StatCards";
 import SaleOverviewChart from "../components/overview/SaleOverviewChart";
@@ -35,11 +35,11 @@ const OverviewPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // 获取总览数据
+      // 獲取總覽數據
       const overviewResponse = await axios.get("/analytics/overview");
       setOverviewData(overviewResponse.data);
 
-      // 获取销售数据
+      // 獲取銷售數據
       const salesResponse = await axios.get("/analytics/sales", {
         params: {
           start: format(dateRange[0].startDate, "yyyy-MM-dd"),
@@ -48,11 +48,11 @@ const OverviewPage = () => {
       });
       setSalesData(Array.isArray(salesResponse.data) ? salesResponse.data : []);
 
-      // 获取订单状态数据
+      // 獲取訂單狀態數據
       const statusResponse = await axios.get("/analytics/status");
       setStatusData(Array.isArray(statusResponse.data) ? statusResponse.data : []);
 
-      // 获取热销产品数据
+      // 獲取熱銷產品數據
       const topProductsResponse = await axios.get("/analytics/top-products", {
         params: { limit: 5 },
       });

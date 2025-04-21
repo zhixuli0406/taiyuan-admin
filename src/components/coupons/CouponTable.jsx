@@ -42,10 +42,19 @@ const CouponTable = () => {
 
   const handleDisableCoupon = async (id) => {
     try {
-      await couponsApi.disableCoupon(id);
+      const coupon = coupons.find(c => c._id === id);
+      if (!coupon) return;
+
+      if (coupon.isActive) {
+        await couponsApi.disableCoupon(id);
+        toast.success("優惠券已停用");
+      } else {
+        await couponsApi.enableCoupon(id);
+        toast.success("優惠券已啟用");
+      }
       fetchCoupons();
     } catch (error) {
-      console.error("Error disabling coupon:", error);
+      console.error("Error toggling coupon status:", error);
       toast.error("操作失敗");
     }
   };

@@ -70,6 +70,17 @@ const couponsApi = {
       console.error("Error disabling coupon:", error);
       throw error;
     }
+  },
+
+  // 啟用優惠券
+  enableCoupon: async (id) => {
+    try {
+      const res = await apiClient.put(`/coupons/${id}/enable`);
+      return res.data;
+    } catch (error) {
+      console.error("Error enabling coupon:", error);
+      throw error;
+    }
   }
 };
 

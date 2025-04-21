@@ -15,7 +15,12 @@ const CouponTable = () => {
   const fetchCoupons = async () => {
     try {
       const res = await couponsApi.getCoupons();
-      setCoupons(Array.isArray(res) ? res : []);
+      if (res && res.coupons) {
+        setCoupons(res.coupons);
+      } else {
+        setCoupons([]);
+        console.error("Invalid response structure:", res);
+      }
     } catch (error) {
       console.error("Error fetching coupons:", error);
       toast.error("獲取優惠券列表失敗");

@@ -5,7 +5,7 @@ const couponsApi = {
   getCoupons: async () => {
     try {
       const res = await apiClient.get('/coupons');
-      return res.data;
+      return res;
     } catch (error) {
       console.error("Error fetching coupons:", error);
       throw error;

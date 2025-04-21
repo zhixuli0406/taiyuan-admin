@@ -1,5 +1,7 @@
+import { Routes, Route } from "react-router-dom";
 import Header from "../components/common_components/Header";
 import CouponTable from "../components/coupons/CouponTable";
+import CreateCoupon from "../components/coupons/CreateCoupon";
 
 const CouponsPage = () => {
   return (
@@ -7,8 +9,10 @@ const CouponsPage = () => {
       <Header title="優惠券" />
 
       <main className="max-w-7xl mx-auto py-6 px-4 lg:px-8">
-        {/* COUPON TABLE */}
-        <CouponTable />
+        <Routes>
+          <Route path="/" element={<CouponTable />} />
+          <Route path="/create" element={<CreateCoupon />} />
+        </Routes>
       </main>
     </div>
   );

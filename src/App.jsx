@@ -40,7 +40,7 @@ const App = () => {
         <Route path="/settings" element={<StoreSettings />} />
         <Route path="/images" element={<ImagesPage />} />
         <Route path="/transport" element={<TransportManagement />} />
-        <Route path="/coupons" element={<CouponsPage />} />
+        <Route path="/coupons/*" element={<CouponsPage />} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
     </div>

@@ -15,10 +15,8 @@ const couponsApi = {
   // 創建優惠券
   createCoupon: async (couponData) => {
     try {
-      const res = await apiClient.post('/coupons', {
-        data: couponData,
-      });
-      return res.data;
+      const res = await apiClient.post('/coupons', couponData);
+      return res;
     } catch (error) {
       console.error("Error creating coupon:", error);
       throw error;

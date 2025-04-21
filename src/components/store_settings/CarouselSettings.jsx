@@ -174,7 +174,7 @@ const CarouselSettings = ({ carousels, onUpdate }) => {
                     </thead>
                     <tbody className="bg-gray-800 divide-y divide-gray-700">
                         {carousels.map((carousel) => (
-                            <tr key={carousel.id}>
+                            <tr key={carousel._id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                     {carousel.title}
                                 </td>
@@ -336,7 +336,7 @@ const CarouselSettings = ({ carousels, onUpdate }) => {
 CarouselSettings.propTypes = {
     carousels: PropTypes.arrayOf(
         PropTypes.shape({
-            id: PropTypes.string.isRequired,
+            _id: PropTypes.string.isRequired,
             title: PropTypes.string.isRequired,
             description: PropTypes.string,
             imageUrl: PropTypes.string,

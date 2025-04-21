@@ -76,7 +76,7 @@ const couponsApi = {
   enableCoupon: async (id) => {
     try {
       const res = await apiClient.put(`/coupons/${id}/enable`);
-      return res.data;
+      return res;
     } catch (error) {
       console.error("Error enabling coupon:", error);
       throw error;

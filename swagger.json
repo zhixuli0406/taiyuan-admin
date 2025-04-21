@@ -252,13 +252,20 @@
                   "type": "object",
                   "properties": {
                     "totalRevenue": {
-                      "type": "number"
+                      "type": "number",
+                      "description": "總銷售額"
                     },
                     "totalOrders": {
-                      "type": "number"
+                      "type": "number",
+                      "description": "總訂單數"
                     },
                     "totalProductsSold": {
-                      "type": "number"
+                      "type": "number",
+                      "description": "總售出產品數"
+                    },
+                    "averageOrderValue": {
+                      "type": "number",
+                      "description": "平均訂單金額 (AOV)"
                     }
                   }
                 }
@@ -403,6 +410,109 @@
                         "items": {
                           "type": "object",
                           "properties": "// 这里可以添加产品详细信息的属性"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "伺服器錯誤"
+          }
+        }
+      }
+    },
+    "/analytics/sales-by-category": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "依產品類別獲取銷售數據",
+        "responses": {
+          "200": {
+            "description": "成功獲取依類別分的銷售數據",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string",
+                        "description": "產品類別名稱"
+                      },
+                      "totalRevenue": {
+                        "type": "number",
+                        "description": "該類別總銷售額"
+                      },
+                      "totalQuantity": {
+                        "type": "number",
+                        "description": "該類別總銷售數量"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "伺服器錯誤"
+          }
+        }
+      }
+    },
+    "/analytics/revenue-per-customer": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "依顧客獲取收益數據",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "返回的顧客數量限制 (預設 20)",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取依顧客分的收益數據",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string",
+                        "description": "顧客 ID"
+                      },
+                      "totalRevenue": {
+                        "type": "number",
+                        "description": "該顧客總消費金額"
+                      },
+                      "totalOrders": {
+                        "type": "number",
+                        "description": "該顧客總訂單數"
+                      },
+                      "customerInfo": {
+                        "type": "object",
+                        "description": "顧客詳細資訊 (如果找到的話)",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "email": {
+                            "type": "string"
+                          }
                         }
                       }
                     }
@@ -1459,6 +1569,135 @@
       }
     },
     "/coupons/{id}": {
+      "put": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "更新折價券",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "折價券的 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "fixed",
+                      "percentage"
+                    ]
+                  },
+                  "value": {
+                    "type": "number"
+                  },
+                  "minPurchase": {
+                    "type": "number"
+                  },
+                  "maxDiscount": {
+                    "type": "number"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "usageLimit": {
+                    "type": "number"
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "applicableToProducts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "applicableToCategories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "折價券更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "coupon": {
+                      "$ref": "#/components/schemas/Coupon"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "請求參數錯誤",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "折價券未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Coupons"
@@ -1539,6 +1778,65 @@
         "responses": {
           "200": {
             "description": "折價券禁用成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "coupon": {
+                      "$ref": "#/components/schemas/Coupon"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "折價券未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/enable": {
+      "put": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "啟用折價券",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "折價券的 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "折價券啟用成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -4441,6 +4739,10 @@
             "type": "string",
             "description": "商店名稱"
           },
+          "description": {
+            "type": "string",
+            "description": "商店描述"
+          },
           "contact": {
             "type": "object",
             "properties": {
@@ -4465,9 +4767,17 @@
                 "type": "string",
                 "description": "城市"
               },
-              "street": {
+              "district": {
+                "type": "string",
+                "description": "行政區"
+              },
+              "addressLine": {
                 "type": "string",
                 "description": "詳細地址"
+              },
+              "postalCode": {
+                "type": "string",
+                "description": "郵遞區號"
               }
             }
           },
@@ -4502,9 +4812,13 @@
                 "type": "string",
                 "description": "Facebook 連結"
               },
-              "twitter": {
+              "line": {
                 "type": "string",
-                "description": "Twitter 連結"
+                "description": "Line 連結"
+              },
+              "x": {
+                "type": "string",
+                "description": "X (Twitter) 連結"
               },
               "instagram": {
                 "type": "string",

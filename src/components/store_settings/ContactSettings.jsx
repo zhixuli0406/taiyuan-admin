@@ -1,29 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 
 const ContactSettings = ({ settings = {}, onUpdate }) => {
   const [formData, setFormData] = useState({
-    contact: {
-      phone: '',
-      email: ''
-    }
+    phone: '',
+    email: ''
   });
 
+  const getSetting = useCallback((key, defaultValue = '') => {
+    return settings?.contact?.[key] ?? defaultValue;
+  }, [settings?.contact]);
+
   useEffect(() => {
-    if (settings) {
-      setFormData({
+    setFormData({
+      phone: getSetting('phone'),
+      email: getSetting('email')
+    });
+  }, [settings, getSetting]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const updatePayload = {
         ...settings,
         contact: {
-          phone: settings.contact?.phone || '',
-          email: settings.contact?.email || ''
+          ...settings.contact,
+          phone: formData.phone,
+          email: formData.email,
         }
-      });
+      };
+      await onUpdate(updatePayload);
+      toast.success('聯絡資訊更新成功');
+    } catch (error) {
+      console.error('更新聯絡資訊失敗:', error);
+      toast.error('更新聯絡資訊失敗');
     }
-  }, [settings]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpdate(formData);
   };
 
   return (
@@ -37,14 +57,9 @@ const ContactSettings = ({ settings = {}, onUpdate }) => {
           <input
             type="tel"
             id="phone"
-            value={formData.contact?.phone || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              contact: {
-                ...formData.contact,
-                phone: e.target.value
-              }
-            })}
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             placeholder="請輸入電話號碼"
           />
@@ -57,14 +72,9 @@ const ContactSettings = ({ settings = {}, onUpdate }) => {
           <input
             type="email"
             id="email"
-            value={formData.contact?.email || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              contact: {
-                ...formData.contact,
-                email: e.target.value
-              }
-            })}
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             placeholder="請輸入電子郵件"
           />
@@ -89,7 +99,7 @@ ContactSettings.propTypes = {
       phone: PropTypes.string,
       email: PropTypes.string
     })
-  }),
+  }).isRequired,
   onUpdate: PropTypes.func.isRequired
 };
 

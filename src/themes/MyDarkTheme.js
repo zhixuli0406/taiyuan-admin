@@ -1,4 +1,4 @@
-// 深色主題示例：可自行擴充更多參數，也可自訂 nodeContentRenderer 來改寫整個節點 UI。
+// 深色主題範例：可自行擴充更多參數，也可自訂 nodeContentRenderer 來改寫整個節點 UI。
 const MyDarkTheme = {
   // 每一行的高度，預設 62px，可視需要調整
   rowHeight: 62,

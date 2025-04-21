@@ -1,31 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 
 const SocialSettings = ({ settings = {}, onUpdate }) => {
   const [formData, setFormData] = useState({
-    social: {
-      facebook: '',
-      instagram: '',
-      line: ''
-    }
+    facebook: '',
+    instagram: '',
+    x: '',
+    line: ''
   });
 
-  useEffect(() => {
-    if (settings) {
-      setFormData({
-        ...settings,
-        social: {
-          facebook: settings.social?.facebook || '',
-          instagram: settings.social?.instagram || '',
-          line: settings.social?.line || ''
-        }
-      });
-    }
-  }, [settings]);
+  const getSetting = useCallback((key, defaultValue = '') => {
+    return settings?.socialLinks?.[key] ?? defaultValue;
+  }, [settings?.socialLinks]);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    setFormData({
+      facebook: getSetting('facebook'),
+      instagram: getSetting('instagram'),
+      x: getSetting('x'),
+      line: getSetting('line')
+    });
+  }, [settings, getSetting]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onUpdate(formData);
+    try {
+      const updatePayload = {
+        ...settings,
+        socialLinks: {
+          ...settings.socialLinks,
+          facebook: formData.facebook,
+          instagram: formData.instagram,
+          x: formData.x,
+          line: formData.line
+        }
+      };
+
+      await onUpdate(updatePayload);
+      toast.success('社群媒體設定更新成功');
+    } catch (error) {
+      console.error('更新社群媒體設定失敗:', error);
+      toast.error('更新社群媒體設定失敗');
+    }
   };
 
   return (
@@ -34,61 +59,61 @@ const SocialSettings = ({ settings = {}, onUpdate }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="facebook" className="block text-sm font-medium text-gray-300 mb-1">
-            Facebook
+            Facebook 連結
           </label>
           <input
-            type="text"
+            type="url"
             id="facebook"
-            value={formData.social?.facebook || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              social: {
-                ...formData.social,
-                facebook: e.target.value
-              }
-            })}
+            name="facebook"
+            value={formData.facebook}
+            onChange={handleInputChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-            placeholder="請輸入 Facebook 連結"
+            placeholder="https://facebook.com/yourpage"
           />
         </div>
 
         <div>
           <label htmlFor="instagram" className="block text-sm font-medium text-gray-300 mb-1">
-            Instagram
+            Instagram 連結
           </label>
           <input
-            type="text"
+            type="url"
             id="instagram"
-            value={formData.social?.instagram || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              social: {
-                ...formData.social,
-                instagram: e.target.value
-              }
-            })}
+            name="instagram"
+            value={formData.instagram}
+            onChange={handleInputChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-            placeholder="請輸入 Instagram 連結"
+            placeholder="https://instagram.com/yourprofile"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="x" className="block text-sm font-medium text-gray-300 mb-1">
+            X (Twitter) 連結
+          </label>
+          <input
+            type="url"
+            id="x"
+            name="x"
+            value={formData.x}
+            onChange={handleInputChange}
+            className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+            placeholder="https://x.com/yourhandle"
           />
         </div>
 
         <div>
           <label htmlFor="line" className="block text-sm font-medium text-gray-300 mb-1">
-            Line
+            Line 連結
           </label>
           <input
-            type="text"
+            type="url"
             id="line"
-            value={formData.social?.line || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              social: {
-                ...formData.social,
-                line: e.target.value
-              }
-            })}
+            name="line"
+            value={formData.line}
+            onChange={handleInputChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-            placeholder="請輸入 Line ID"
+            placeholder="https://line.me/yourprofile"
           />
         </div>
 
@@ -107,12 +132,13 @@ const SocialSettings = ({ settings = {}, onUpdate }) => {
 
 SocialSettings.propTypes = {
   settings: PropTypes.shape({
-    social: PropTypes.shape({
+    socialLinks: PropTypes.shape({
       facebook: PropTypes.string,
       instagram: PropTypes.string,
+      x: PropTypes.string,
       line: PropTypes.string
     })
-  }),
+  }).isRequired,
   onUpdate: PropTypes.func.isRequired
 };
 

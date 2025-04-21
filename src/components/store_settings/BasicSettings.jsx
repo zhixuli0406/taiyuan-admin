@@ -1,89 +1,96 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import TimePicker from 'react-time-picker';
-import 'react-time-picker/dist/TimePicker.css';
-import storeSettingsApi from '../../core/api/storeSettings';
 import { toast } from 'react-toastify';
 
-const BasicSettings = ({ settings = {}, onUpdate }) => {
+const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
   const [formData, setFormData] = useState({
-    name: settings.name || '',
-    description: settings.description || '',
-    businessHours: settings.businessHours || {
-      start: '09:00',
-      end: '18:00'
-    }
+    storeName: '',
+    description: '',
+    businessHours: { openTime: '', closeTime: '' },
+    branding: { primaryColor: '#ffffff' }
   });
-  const [logo, setLogo] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+
+  const getSetting = useCallback((path, defaultValue = '') => {
+    return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined && acc[key] !== null) ? acc[key] : defaultValue, settings);
+  }, [settings]);
 
   useEffect(() => {
-    console.log('BasicSettings 收到的设置:', settings);
-    if (settings?.businessHours) {
-      // 解析 businessHours 字符串，例如 "9:00 AM - 6:00 PM"
-      const [startTime, endTime] = settings.businessHours.split(' - ');
-      const updatedFormData = {
-        ...settings,
-        businessHours: {
-          start: parseAMPMTo24Hour(startTime),
-          end: parseAMPMTo24Hour(endTime)
-        }
-      };
-      console.log('更新后的表单数据:', updatedFormData);
-      setFormData(updatedFormData);
-    } else {
-      console.log('使用默认设置:', settings);
-      setFormData(settings);
+    console.log('BasicSettings received settings:', settings);
+    setFormData({
+      storeName: getSetting('storeName'),
+      description: getSetting('description', ''),
+      businessHours: {
+        openTime: getSetting('businessHours.openTime', '09:00'),
+        closeTime: getSetting('businessHours.closeTime', '18:00')
+      },
+      branding: {
+        primaryColor: getSetting('branding.primaryColor', '#ffffff')
+      }
+    });
+    setLogoFile(null);
+  }, [settings, getSetting]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    const keys = name.split('.');
+
+    setFormData(prev => {
+      let current = prev;
+      for (let i = 0; i < keys.length - 1; i++) {
+        current[keys[i]] = { ...current[keys[i]] };
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]] = value;
+      return { ...prev };
+    });
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
     }
-  }, [settings]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (logoFile) {
+      try {
+        await onLogoUpload(logoFile);
+        toast.success('Logo 上傳請求已送出');
+      } catch (error) {
+        console.error('Logo upload trigger failed in BasicSettings:', error);
+        return;
+      }
+    }
+
     try {
-      if (logo) {
-        await storeSettingsApi.updateLogo(logo);
-        setLogo(null);
-      }
-      
-      onUpdate();
-      toast.success('設置更新成功');
+      const updatePayload = {
+        ...settings,
+        storeName: formData.storeName,
+        description: formData.description,
+        businessHours: {
+          openTime: formData.businessHours.openTime,
+          closeTime: formData.businessHours.closeTime,
+        },
+        branding: {
+          ...settings.branding,
+          primaryColor: formData.branding.primaryColor,
+        }
+      };
+      await onUpdate(updatePayload);
+      toast.success('基本設定更新成功');
     } catch (error) {
-      console.error('更新設置失敗:', error);
-      toast.error(error.response?.data?.error || '更新設置失敗');
+      console.error('基本設定更新失敗:', error);
+      toast.error('基本設定更新失敗');
     }
   };
 
-  const formatTimeToAMPM = (time) => {
-    if (!time) return '';
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const formattedHour = hour % 12 || 12;
-    return `${formattedHour}:${minutes} ${ampm}`;
-  };
-
-  const parseAMPMTo24Hour = (timeStr) => {
-    if (!timeStr) return '';
-    const [time, period] = timeStr.split(' ');
-    let [hours, minutes] = time.split(':');
-    hours = parseInt(hours);
-    if (period === 'PM' && hours !== 12) {
-      hours += 12;
-    } else if (period === 'AM' && hours === 12) {
-      hours = 0;
-    }
-    return `${hours.toString().padStart(2, '0')}:${minutes}`;
-  };
-
-  const handleTimeChange = (time, type) => {
-    const formattedTime = parseAMPMTo24Hour(time);
-    setFormData({
-      ...formData,
-      businessHours: {
-        ...formData.businessHours,
-        [type]: formattedTime
-      }
-    });
+  const formatDisplayTime = (time) => {
+    if (!time || !/^\d{2}:\d{2}$/.test(time)) return '無效時間';
+    return time;
   };
 
   return (
@@ -91,15 +98,16 @@ const BasicSettings = ({ settings = {}, onUpdate }) => {
       <h2 className="text-lg font-medium text-white mb-6">基本設定</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="storeName" className="block text-sm font-medium text-gray-300 mb-1">
             商店名稱 <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
-            id="name"
+            id="storeName"
+            name="storeName"
             required
-            value={formData.name || ''}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.storeName || ''}
+            onChange={handleInputChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             placeholder="請輸入商店名稱"
           />
@@ -111,11 +119,9 @@ const BasicSettings = ({ settings = {}, onUpdate }) => {
           </label>
           <textarea
             id="description"
+            name="description"
             value={formData.description || ''}
-            onChange={(e) => setFormData({
-              ...formData,
-              description: e.target.value
-            })}
+            onChange={handleInputChange}
             rows={4}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             placeholder="請輸入商店描述"
@@ -124,85 +130,88 @@ const BasicSettings = ({ settings = {}, onUpdate }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            營業時間
+            營業時間 (24小時制 HH:MM)
           </label>
           <div className="flex items-center space-x-4">
             <div className="flex-1">
-              <label className="block text-xs text-gray-400 mb-1">開始時間</label>
-              <TimePicker
-                value={formData.businessHours?.start || '09:00'}
-                onChange={(value) => handleTimeChange(value, 'start')}
-                className="w-full [&>div]:bg-gray-700 [&>div]:border-gray-600 [&>div]:rounded-lg [&>div]:text-white"
-                clearIcon={null}
-                format="h:mm a"
-                disableClock={true}
-                locale="en-US"
+              <label htmlFor="businessHours.openTime" className="block text-xs text-gray-400 mb-1">開始時間</label>
+              <input
+                type="time"
+                id="businessHours.openTime"
+                name="businessHours.openTime"
+                value={formData.businessHours.openTime || ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                placeholder="HH:MM"
+                required
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-gray-400 mb-1">結束時間</label>
-              <TimePicker
-                value={formData.businessHours?.end || '18:00'}
-                onChange={(value) => handleTimeChange(value, 'end')}
-                className="w-full [&>div]:bg-gray-700 [&>div]:border-gray-600 [&>div]:rounded-lg [&>div]:text-white"
-                clearIcon={null}
-                format="h:mm a"
-                disableClock={true}
-                locale="en-US"
+              <label htmlFor="businessHours.closeTime" className="block text-xs text-gray-400 mb-1">結束時間</label>
+              <input
+                type="time"
+                id="businessHours.closeTime"
+                name="businessHours.closeTime"
+                value={formData.businessHours.closeTime || ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                placeholder="HH:MM"
+                required
               />
             </div>
           </div>
           <div className="mt-2 text-sm text-gray-400">
-            當前營業時間: {formatTimeToAMPM(formData.businessHours?.start)} - {formatTimeToAMPM(formData.businessHours?.end)}
+            當前設定: {formatDisplayTime(formData.businessHours.openTime)} - {formatDisplayTime(formData.businessHours.closeTime)}
           </div>
         </div>
 
         <div>
           <label htmlFor="logo" className="block text-sm font-medium text-gray-300">
-            商店 Logo
+            商店 Logo (上傳新圖片以替換)
           </label>
           <input
             type="file"
             id="logo"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              if (file) {
-                setLogo(file);
-              }
-            }}
+            accept="image/jpeg,image/png,image/gif"
+            onChange={handleLogoChange}
             className="mt-1 block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
           />
-          {settings?.appearance?.logo && (
+          {getSetting('branding.logoUrl') && !logoFile && (
             <div className="mt-2">
+              <p className="text-xs text-gray-400 mb-1">當前 Logo:</p>
               <img
-                src={settings.appearance.logo}
+                src={getSetting('branding.logoUrl')}
                 alt="Current Logo"
-                className="h-20 w-auto"
+                className="h-20 w-auto bg-gray-600 p-1 rounded"
+              />
+            </div>
+          )}
+          {logoFile && (
+            <div className="mt-2">
+              <p className="text-xs text-gray-400 mb-1">預覽新 Logo:</p>
+              <img
+                src={URL.createObjectURL(logoFile)}
+                alt="New Logo Preview"
+                className="h-20 w-auto bg-gray-600 p-1 rounded"
               />
             </div>
           )}
         </div>
 
         <div>
-          <label htmlFor="themeColor" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="branding.primaryColor" className="block text-sm font-medium text-gray-300 mb-1">
             主題顏色
           </label>
           <div className="flex items-center space-x-4">
             <input
               type="color"
-              id="themeColor"
-              value={formData.appearance?.themeColor || '#ffffff'}
-              onChange={(e) => setFormData({
-                ...formData,
-                appearance: {
-                  ...formData.appearance,
-                  themeColor: e.target.value
-                }
-              })}
-              className="h-10 w-20 rounded-lg border border-gray-600 cursor-pointer"
+              id="branding.primaryColor"
+              name="branding.primaryColor"
+              value={formData.branding.primaryColor || '#ffffff'}
+              onChange={handleInputChange}
+              className="h-10 w-20 rounded-lg border border-gray-600 cursor-pointer p-1 bg-gray-700"
             />
-            <span className="text-gray-300 font-mono">{formData.appearance?.themeColor || '#ffffff'}</span>
+            <span className="text-gray-300 font-mono">{formData.branding.primaryColor || '#ffffff'}</span>
           </div>
         </div>
 
@@ -221,15 +230,19 @@ const BasicSettings = ({ settings = {}, onUpdate }) => {
 
 BasicSettings.propTypes = {
   settings: PropTypes.shape({
-    name: PropTypes.string,
+    storeName: PropTypes.string,
     description: PropTypes.string,
-    businessHours: PropTypes.string,
-    appearance: PropTypes.shape({
-      logo: PropTypes.string,
-      themeColor: PropTypes.string
+    businessHours: PropTypes.shape({
+      openTime: PropTypes.string,
+      closeTime: PropTypes.string,
+    }),
+    branding: PropTypes.shape({
+      logoUrl: PropTypes.string,
+      primaryColor: PropTypes.string
     })
   }).isRequired,
-  onUpdate: PropTypes.func.isRequired
+  onUpdate: PropTypes.func.isRequired,
+  onLogoUpload: PropTypes.func.isRequired
 };
 
 export default BasicSettings; 

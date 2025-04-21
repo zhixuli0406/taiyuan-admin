@@ -53,6 +53,10 @@ const CouponTable = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('zh-TW');
+  };
+
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
@@ -92,6 +96,7 @@ const CouponTable = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">最低消費</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">最大折扣</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">使用次數</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">有效期限</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">狀態</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">操作</th>
             </tr>
@@ -101,15 +106,18 @@ const CouponTable = () => {
               <tr key={coupon._id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{coupon.code}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {coupon.discountType === "percentage" ? "百分比" : "固定金額"}
+                  {coupon.type === "fixed" ? "固定金額" : "百分比"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : `$${coupon.discountValue}`}
+                  {coupon.type === "fixed" ? `$${coupon.value}` : `${coupon.value}%`}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${coupon.minPurchase || 0}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${coupon.maxDiscount || 0}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                  {coupon.usageCount || 0} / {coupon.usageLimit || "無限"}
+                  {coupon.usedCount || 0} / {coupon.usageLimit || "無限"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                  {formatDate(coupon.startDate)} - {formatDate(coupon.endDate)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

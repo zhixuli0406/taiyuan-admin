@@ -7,8 +7,8 @@ const CreateCoupon = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     code: "",
-    discountType: "percentage",
-    discountValue: "",
+    type: "percentage",
+    value: "",
     minPurchase: "",
     maxDiscount: "",
     usageLimit: "",
@@ -91,9 +91,10 @@ const CreateCoupon = () => {
               折扣類型
             </label>
             <select
-              name="discountType"
-              value={formData.discountType}
+              name="type"
+              value={formData.type}
               onChange={handleChange}
+              required
               className="w-full px-4 py-2 rounded-md bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500"
             >
               <option value="percentage">百分比</option>
@@ -107,8 +108,8 @@ const CreateCoupon = () => {
             </label>
             <input
               type="number"
-              name="discountValue"
-              value={formData.discountValue}
+              name="value"
+              value={formData.value}
               onChange={handleChange}
               required
               min="0"

@@ -15,7 +15,7 @@ const CouponTable = () => {
   const fetchCoupons = async () => {
     try {
       const res = await couponsApi.getCoupons();
-      setCoupons(res.coupons);
+      setCoupons(Array.isArray(res) ? res : []);
     } catch (error) {
       console.error("Error fetching coupons:", error);
       toast.error("獲取優惠券列表失敗");

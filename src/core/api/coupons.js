@@ -1,30 +1,74 @@
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
-const couponsApi = {
-  // 获取所有优惠券
-  getAll: () => {
-    return apiClient.get('/coupons');
-  },
-
-  // 创建优惠券
-  create: (couponData) => {
-    return apiClient.post('/coupons', couponData);
-  },
-
-  // 验证优惠券
-  validate: (validationData) => {
-    return apiClient.post('/coupons/validate', validationData);
-  },
-
-  // 禁用优惠券
-  disable: (id) => {
-    return apiClient.put(`/coupons/${id}/disable`);
-  },
-
-  // 删除优惠券
-  delete: (id) => {
-    return apiClient.delete(`/coupons/${id}`);
+// 获取所有优惠券
+export const getCoupons = async () => {
+  try {
+    const res = await apiClient.get('/coupons');
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching coupons:", error);
+    throw error;
   }
 };
 
-export default couponsApi; 
+// 创建优惠券
+export const createCoupon = async (couponData) => {
+  try {
+    const res = await apiClient.post('/coupons', {
+      data: couponData,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error creating coupon:", error);
+    throw error;
+  }
+};
+
+// 更新优惠券
+export const updateCoupon = async (id, couponData) => {
+  try {
+    const res = await apiClient.put(`/coupons/${id}`, {
+      data: couponData,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating coupon:", error);
+    throw error;
+  }
+};
+
+// 删除优惠券
+export const deleteCoupon = async (id) => {
+  try {
+    const res = await apiClient.delete(`/coupons/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Error deleting coupon:", error);
+    throw error;
+  }
+};
+
+// 验证优惠券
+export const verifyCoupon = async (code, amount) => {
+  try {
+    const res = await apiClient.post('/coupons/verify', {
+      code,
+      amount,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error verifying coupon:", error);
+    throw error;
+  }
+};
+
+// 禁用优惠券
+export const disableCoupon = async (id) => {
+  try {
+    const res = await apiClient.put(`/coupons/${id}/disable`);
+    return res.data;
+  } catch (error) {
+    console.error("Error disabling coupon:", error);
+    throw error;
+  }
+}; 

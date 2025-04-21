@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BarChart2, Settings, ShoppingBag, ShoppingCart, Users, Menu, ChartBarStacked, Image, Truck } from "lucide-react";
+import { BarChart2, Settings, ShoppingBag, ShoppingCart, Users, Menu, ChartBarStacked, Image, Truck, Ticket } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -9,6 +9,7 @@ const SIDEBAR_ITEMS = [
     { name: "分類", icon: ChartBarStacked, color: "#8B5CF6", href: "/categories" },
     { name: "客戶", icon: Users, color: "#8B5CF6", href: "/users" },
     { name: "訂單", icon: ShoppingCart, color: "#8B5CF6", href: "/orders" },
+    { name: "優惠券", icon: Ticket, color: "#8B5CF6", href: "/coupons" },
     { name: "圖片", icon: Image, color: "#8B5CF6", href: "/images" },
     { name: "運輸方式", icon: Truck, color: "#8B5CF6", href: "/transport" },
     { name: "管理員", icon: Users, color: "#8B5CF6", href: "/admin" },

@@ -15,6 +15,7 @@ import AdminPage from "./pages/Admin/AdminPage";
 import StoreSettings from "./pages/StoreSettings";
 import ImagesPage from "./pages/ImagesPage";
 import TransportManagement from "./pages/TransportManagement";
+import CouponsPage from "./pages/CouponsPage";
 
 const App = () => {
   return localStorage.getItem("token") ? (
@@ -39,6 +40,7 @@ const App = () => {
         <Route path="/settings" element={<StoreSettings />} />
         <Route path="/images" element={<ImagesPage />} />
         <Route path="/transport" element={<TransportManagement />} />
+        <Route path="/coupons" element={<CouponsPage />} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
     </div>

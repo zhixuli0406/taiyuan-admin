@@ -15,6 +15,7 @@ const AdminTable = () => {
         username: '',
         email: '',
         role: 'Admin',
+        password: ''
     })
     const itemsPerPage = 6
 
@@ -69,26 +70,34 @@ const AdminTable = () => {
                 username: '',
                 email: '',
                 role: 'Admin',
-                isActive: true
+                isActive: true,
+                password: ''
             })
         }
         setShowModal(true)
     }
 
     const handleSave = async () => {
+        if (!selectedAdmin && !formData.password) {
+            toast.error('創建管理員時必須設置密碼');
+            return;
+        }
+        
         try {
+            let payload = { ...formData };
             if (selectedAdmin) {
-                await adminApi.update(selectedAdmin._id, formData)
+                delete payload.password; 
+                await adminApi.update(selectedAdmin._id, payload)
                 toast.success('管理員更新成功')
             } else {
-                await adminApi.create(formData)
+                await adminApi.create(payload)
                 toast.success('管理員創建成功')
             }
             fetchAdmins()
             setShowModal(false)
         } catch (error) {
             console.error('保存管理員失敗:', error)
-            toast.error(error.response?.data?.message || '保存管理員失敗')
+            toast.error(error.response?.data?.error || error.response?.data?.message || '保存管理員失敗')
             if (error.response?.status === 401) {
                 localStorage.clear()
                 window.location.href = '/'
@@ -241,6 +250,18 @@ const AdminTable = () => {
                                     <option value="SuperAdmin">超級管理員</option>
                                 </select>
                             </div>
+                            {!selectedAdmin && (
+                              <div>
+                                  <label className="block text-sm font-medium text-gray-300 mb-1">密碼</label>
+                                  <input
+                                      type="password"
+                                      className="w-full px-3 py-2 bg-gray-700 text-white rounded-md"
+                                      value={formData.password}
+                                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                      required
+                                  />
+                              </div>
+                            )}
                         </div>
 
                         <div className="flex justify-end mt-6 space-x-3">

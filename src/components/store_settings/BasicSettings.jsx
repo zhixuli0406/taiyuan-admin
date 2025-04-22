@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { toast } from 'react-toastify';
 
@@ -6,43 +6,43 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
   const [formData, setFormData] = useState({
     storeName: '',
     description: '',
-    businessHours: { openTime: '', closeTime: '' },
-    branding: { primaryColor: '#ffffff' }
+    businessHours: { openTime: '09:00', closeTime: '18:00' },
+    appearance: { primaryColor: '#ffffff', logo: '' }
   });
   const [logoFile, setLogoFile] = useState(null);
 
-  const getSetting = useCallback((path, defaultValue = '') => {
-    return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined && acc[key] !== null) ? acc[key] : defaultValue, settings);
-  }, [settings]);
-
   useEffect(() => {
     console.log('BasicSettings received settings:', settings);
-    setFormData({
-      storeName: getSetting('storeName'),
-      description: getSetting('description', ''),
-      businessHours: {
-        openTime: getSetting('businessHours.openTime', '09:00'),
-        closeTime: getSetting('businessHours.closeTime', '18:00')
-      },
-      branding: {
-        primaryColor: getSetting('branding.primaryColor', '#ffffff')
-      }
-    });
+    if (settings) {
+      setFormData({
+        storeName: settings.storeName || '',
+        description: settings.description || '',
+        businessHours: {
+          openTime: settings.businessHours?.openTime || '09:00',
+          closeTime: settings.businessHours?.closeTime || '18:00'
+        },
+        appearance: {
+          primaryColor: settings.appearance?.themeColor || '#ffffff',
+          logo: settings.appearance?.logo || ''
+        }
+      });
+    }
     setLogoFile(null);
-  }, [settings, getSetting]);
+  }, [settings]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     const keys = name.split('.');
 
     setFormData(prev => {
-      let current = prev;
+      const newState = { ...prev };
+      let current = newState;
       for (let i = 0; i < keys.length - 1; i++) {
-        current[keys[i]] = { ...current[keys[i]] };
+        current[keys[i]] = current[keys[i]] ? { ...current[keys[i]] } : {};
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = value;
-      return { ...prev };
+      return newState;
     });
   };
 
@@ -56,17 +56,14 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (logoFile) {
-      try {
-        await onLogoUpload(logoFile);
-        toast.success('Logo 上傳請求已送出');
-      } catch (error) {
-        console.error('Logo upload trigger failed in BasicSettings:', error);
-        return;
-      }
-    }
-
     try {
+      // let finalSettings = { ...formData }; // Removed unused variable
+
+      if (logoFile) {
+        await onLogoUpload(logoFile);
+        toast.success('Logo 上傳請求已處理');
+      }
+      
       const updatePayload = {
         ...settings,
         storeName: formData.storeName,
@@ -75,22 +72,18 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
           openTime: formData.businessHours.openTime,
           closeTime: formData.businessHours.closeTime,
         },
-        branding: {
-          ...settings.branding,
-          primaryColor: formData.branding.primaryColor,
+        appearance: {
+          logo: settings.appearance?.logo,
+          themeColor: formData.appearance.primaryColor
         }
       };
+
       await onUpdate(updatePayload);
       toast.success('基本設定更新成功');
     } catch (error) {
-      console.error('基本設定更新失敗:', error);
-      toast.error('基本設定更新失敗');
+      console.error('處理基本設定更新失敗:', error);
+      toast.error(error.message || '基本設定更新失敗');
     }
-  };
-
-  const formatDisplayTime = (time) => {
-    if (!time || !/^\d{2}:\d{2}$/.test(time)) return '無效時間';
-    return time;
   };
 
   return (
@@ -106,7 +99,7 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
             id="storeName"
             name="storeName"
             required
-            value={formData.storeName || ''}
+            value={formData.storeName}
             onChange={handleInputChange}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             placeholder="請輸入商店名稱"
@@ -120,7 +113,7 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
           <textarea
             id="description"
             name="description"
-            value={formData.description || ''}
+            value={formData.description}
             onChange={handleInputChange}
             rows={4}
             className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
@@ -139,7 +132,7 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
                 type="time"
                 id="businessHours.openTime"
                 name="businessHours.openTime"
-                value={formData.businessHours.openTime || ''}
+                value={formData.businessHours.openTime}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 placeholder="HH:MM"
@@ -152,7 +145,7 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
                 type="time"
                 id="businessHours.closeTime"
                 name="businessHours.closeTime"
-                value={formData.businessHours.closeTime || ''}
+                value={formData.businessHours.closeTime}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 placeholder="HH:MM"
@@ -161,7 +154,7 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
             </div>
           </div>
           <div className="mt-2 text-sm text-gray-400">
-            當前設定: {formatDisplayTime(formData.businessHours.openTime)} - {formatDisplayTime(formData.businessHours.closeTime)}
+            當前設定: {formData.businessHours.openTime} - {formData.businessHours.closeTime}
           </div>
         </div>
 
@@ -176,11 +169,11 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
             onChange={handleLogoChange}
             className="mt-1 block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
           />
-          {getSetting('branding.logoUrl') && !logoFile && (
+          {formData.appearance.logo && !logoFile && (
             <div className="mt-2">
               <p className="text-xs text-gray-400 mb-1">當前 Logo:</p>
               <img
-                src={getSetting('branding.logoUrl')}
+                src={formData.appearance.logo}
                 alt="Current Logo"
                 className="h-20 w-auto bg-gray-600 p-1 rounded"
               />
@@ -199,19 +192,19 @@ const BasicSettings = ({ settings = {}, onUpdate, onLogoUpload }) => {
         </div>
 
         <div>
-          <label htmlFor="branding.primaryColor" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="appearance.primaryColor" className="block text-sm font-medium text-gray-300 mb-1">
             主題顏色
           </label>
           <div className="flex items-center space-x-4">
             <input
               type="color"
-              id="branding.primaryColor"
-              name="branding.primaryColor"
-              value={formData.branding.primaryColor || '#ffffff'}
+              id="appearance.primaryColor"
+              name="appearance.primaryColor"
+              value={formData.appearance.primaryColor}
               onChange={handleInputChange}
               className="h-10 w-20 rounded-lg border border-gray-600 cursor-pointer p-1 bg-gray-700"
             />
-            <span className="text-gray-300 font-mono">{formData.branding.primaryColor || '#ffffff'}</span>
+            <span className="text-gray-300 font-mono">{formData.appearance.primaryColor}</span>
           </div>
         </div>
 
@@ -236,11 +229,15 @@ BasicSettings.propTypes = {
       openTime: PropTypes.string,
       closeTime: PropTypes.string,
     }),
-    branding: PropTypes.shape({
-      logoUrl: PropTypes.string,
-      primaryColor: PropTypes.string
-    })
-  }).isRequired,
+    appearance: PropTypes.shape({
+      logo: PropTypes.string,
+      themeColor: PropTypes.string
+    }),
+    _id: PropTypes.string,
+    contact: PropTypes.object,
+    address: PropTypes.object,
+    socialLinks: PropTypes.object
+  }),
   onUpdate: PropTypes.func.isRequired,
   onLogoUpload: PropTypes.func.isRequired
 };

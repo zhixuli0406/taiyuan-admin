@@ -156,13 +156,7 @@ const CarouselSettings = ({ carousels, onUpdate }) => {
                                 標題
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                                描述
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                                 圖片
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                                排序
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                                 狀態
@@ -178,9 +172,6 @@ const CarouselSettings = ({ carousels, onUpdate }) => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                     {carousel.title}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                    {carousel.description}
-                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <img
                                         src={carousel.imageUrl}
@@ -189,21 +180,9 @@ const CarouselSettings = ({ carousels, onUpdate }) => {
                                     />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                    {carousel.order}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                     {carousel.isActive ? '啟用' : '停用'}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button
-                                        onClick={() => {
-                                            setEditingCarousel(carousel);
-                                            setIsModalOpen(true);
-                                        }}
-                                        className="text-indigo-400 hover:text-indigo-300 mr-4"
-                                    >
-                                        編輯
-                                    </button>
                                     <button
                                         onClick={() => handleDelete(carousel._id)}
                                         className="text-red-400 hover:text-red-300"
@@ -235,45 +214,6 @@ const CarouselSettings = ({ carousels, onUpdate }) => {
                                     required
                                     value={editingCarousel?.title || ''}
                                     onChange={(e) => setEditingCarousel({ ...editingCarousel, title: e.target.value })}
-                                    className="mt-1 block w-full rounded-md border-gray-700 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="description" className="block text-sm font-medium text-gray-300">
-                                    描述
-                                </label>
-                                <textarea
-                                    id="description"
-                                    rows={3}
-                                    value={editingCarousel?.description || ''}
-                                    onChange={(e) => setEditingCarousel({ ...editingCarousel, description: e.target.value })}
-                                    className="mt-1 block w-full rounded-md border-gray-700 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="link" className="block text-sm font-medium text-gray-300">
-                                    連結
-                                </label>
-                                <input
-                                    type="text"
-                                    id="link"
-                                    value={editingCarousel?.link || ''}
-                                    onChange={(e) => setEditingCarousel({ ...editingCarousel, link: e.target.value })}
-                                    className="mt-1 block w-full rounded-md border-gray-700 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="order" className="block text-sm font-medium text-gray-300">
-                                    排序
-                                </label>
-                                <input
-                                    type="number"
-                                    id="order"
-                                    value={editingCarousel?.order || ''}
-                                    onChange={(e) => setEditingCarousel({ ...editingCarousel, order: parseInt(e.target.value) })}
                                     className="mt-1 block w-full rounded-md border-gray-700 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                                 />
                             </div>

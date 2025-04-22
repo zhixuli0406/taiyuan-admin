@@ -86,51 +86,67 @@ const StoreSettings = () => {
       const response = await storeSettingsApi.get();
       console.log('API 响应:', response);
       if (response) {
-        let parsedBusinessHoursObject = { openTime: '', closeTime: '' };
-        let businessHoursForState = response.businessHours || '';
+        const storeName = response.name || ''; 
+        const description = response.description || '';
 
-        if (typeof response.businessHours === 'string' && response.businessHours.includes('-')) {
+        let businessHours = { openTime: '09:00', closeTime: '18:00' };
+        if (response.businessHours && typeof response.businessHours === 'string') {
+          try {
             const [startStr, endStr] = response.businessHours.split(' - ');
-            parsedBusinessHoursObject.openTime = parseAMPMTo24Hour(startStr.trim());
-            parsedBusinessHoursObject.closeTime = parseAMPMTo24Hour(endStr.trim());
-            businessHoursForState = parsedBusinessHoursObject;
+            const parsedOpenTime = parseAMPMTo24Hour(startStr.trim());
+            const parsedCloseTime = parseAMPMTo24Hour(endStr.trim());
+            if (parsedOpenTime && parsedCloseTime) {
+              businessHours = { openTime: parsedOpenTime, closeTime: parsedCloseTime };
+            }
+          } catch (err) {
+            console.error("無法解析 businessHours 字串:", response.businessHours, err);
+          }
         } else if (typeof response.businessHours === 'object' && response.businessHours !== null) {
-            parsedBusinessHoursObject = {
-                openTime: response.businessHours.openTime || '',
-                closeTime: response.businessHours.closeTime || ''
-            };
-            businessHoursForState = parsedBusinessHoursObject;
+          businessHours = {
+            openTime: response.businessHours.openTime || '09:00',
+            closeTime: response.businessHours.closeTime || '18:00'
+          };
         }
 
-        const updatedSettings = {
-          storeName: response.storeName || response.name || '',
-          description: response.description || '',
-          contact: {
-            ...initialStoreSettings.contact,
-            ...(response.contact || {}),
-          },
-          address: {
-            ...(response.address || {}),
+        const appearance = {
+          logo: response.appearance?.logo || '',
+          themeColor: response.appearance?.themeColor || '#ffffff'
+        };
+        
+        const contact = {
+            phone: response.contact?.phone || '',
+            email: response.contact?.email || ''
+        };
+
+        const address = {
             addressLine: response.address?.addressLine || '',
             city: response.address?.city || '',
             country: response.address?.country || '',
-          },
-          socialMedia: {
-            ...initialStoreSettings.socialMedia,
-            ...(response.socialMedia || {}),
-            facebook: response.socialMedia?.facebook || response.socialLinks?.facebook || '',
-            instagram: response.socialMedia?.instagram || response.socialLinks?.instagram || '',
-            twitter: response.socialMedia?.twitter || '',
-          },
-          businessHours: businessHoursForState,
-          branding: {
-            ...initialStoreSettings.branding,
-            ...(response.branding || {}),
-            logoUrl: response.branding?.logoUrl || response.appearance?.logo || '',
-            primaryColor: response.branding?.primaryColor || response.appearance?.themeColor || '#ffffff'
-          }
+            district: response.address?.district || '',
+            postalCode: response.address?.postalCode || '',
         };
-        console.log('更新后的设置 (mapped):', updatedSettings);
+
+        const socialLinks = {
+            facebook: response.socialLinks?.facebook || '',
+            instagram: response.socialLinks?.instagram || '',
+            x: response.socialLinks?.x || '',
+            line: response.socialLinks?.line || '',
+        };
+
+        const updatedSettings = {
+          storeName,
+          description,
+          contact,
+          address,
+          socialLinks,
+          businessHours,
+          appearance,
+          _id: response._id,
+          updatedAt: response.updatedAt, 
+          createdAt: response.createdAt,
+        };
+        
+        console.log('更新後的設定 (傳遞給子元件):', updatedSettings);
         setStoreSettings(updatedSettings);
       } else {
          console.warn('API 未返回有效的商店設定，使用初始值');
@@ -160,30 +176,17 @@ const StoreSettings = () => {
   const handleStoreSettingsUpdate = async (updatedSettingsFromChild) => {
     try {
       const apiPayload = {
-         storeName: updatedSettingsFromChild.storeName,
-         contact: updatedSettingsFromChild.contact,
-         address: {
-            addressLine: updatedSettingsFromChild.address?.addressLine,
-            city: updatedSettingsFromChild.address?.city,
-            country: updatedSettingsFromChild.address?.country,
-            postalCode: updatedSettingsFromChild.address?.postalCode,
-            district: updatedSettingsFromChild.address?.district,
-         },
-         socialLinks: {
-            facebook: updatedSettingsFromChild.socialLinks?.facebook,
-            instagram: updatedSettingsFromChild.socialLinks?.instagram,
-            x: updatedSettingsFromChild.socialLinks?.x,
-            line: updatedSettingsFromChild.socialLinks?.line,
-         },
-         businessHours: {
-            openTime: updatedSettingsFromChild.businessHours?.openTime,
-            closeTime: updatedSettingsFromChild.businessHours?.closeTime,
-         },
-         branding: {
-            logoUrl: updatedSettingsFromChild.branding?.logoUrl,
-            primaryColor: updatedSettingsFromChild.branding?.primaryColor,
-         },
+         name: updatedSettingsFromChild.storeName,
          description: updatedSettingsFromChild.description,
+         contact: updatedSettingsFromChild.contact,
+         address: updatedSettingsFromChild.address,
+         socialLinks: updatedSettingsFromChild.socialLinks,
+         businessHours: `${formatTimeForAPI(updatedSettingsFromChild.businessHours.openTime)} - ${formatTimeForAPI(updatedSettingsFromChild.businessHours.closeTime)}`,
+         appearance: {
+            logo: updatedSettingsFromChild.appearance.logo,
+            themeColor: updatedSettingsFromChild.appearance.themeColor 
+         },
+         _id: updatedSettingsFromChild._id 
       };
 
       await storeSettingsApi.update(apiPayload);
@@ -232,7 +235,12 @@ const StoreSettings = () => {
         throw new Error(`上傳 Logo 到 S3 失敗`);
       }
 
-      await storeSettingsApi.updateLogoUrl(imageUrl);
+      await storeSettingsApi.update({
+        appearance: {
+          ...storeSettings.appearance,
+          logo: imageUrl
+        }
+      });
       await fetchStoreSettings(); 
       toast.success('Logo 上傳成功');
 
@@ -243,6 +251,25 @@ const StoreSettings = () => {
       console.error('上傳 Logo 失敗:', err);
     } finally {
        setLoading(false); 
+    }
+  };
+
+  const formatTimeForAPI = (time) => {
+    if (!time || typeof time !== 'string' || !time.includes(':')) return '';
+    try {
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours);
+      if (isNaN(hour) || isNaN(parseInt(minutes))) return '';
+
+      const period = hour >= 12 ? 'PM' : 'AM';
+      let displayHour = hour % 12;
+      if (displayHour === 0) {
+          displayHour = 12;
+      }
+      return `${displayHour}:${minutes} ${period}`;
+    } catch (e) {
+      console.error("formatTimeForAPI failed for time:", time, e);
+      return '';
     }
   };
 
